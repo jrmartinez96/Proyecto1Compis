@@ -99,14 +99,14 @@ class DecafPrinter(DecafListener):
             # 0: Return
             # 1: Value
             # 2: ;
-            #hasReturnStatement = False
             statementChldn = ctx.getChildren()
+            methodType = ctx.parentCtx.parentCtx.getChild(0).getText()
 
-            if ctx.getChild(0).getText() != "return":
-                raise ReturnMissing
+            # if ctx.getChild(0).getText() != "return":
+            #     raise ReturnMissing
 
-            if self.currentMethodVoid:
-                if ctx.getChild(0).getText() != '':
+            if methodType == 'void':
+                if ctx.getChild(0).getText() == 'return' and ctx.getChild(1).getText() != '':
                     raise ReturnNotEmpty
             else:
                 if ctx.getChild(0).getText() == '':
@@ -121,7 +121,7 @@ class DecafPrinter(DecafListener):
         except ReturnEmpty:
             print("Missing return value on non-void method")
         except ReturnNotEmpty:
-            print("Void type method should have an empty return")
+            print("ReturnNotEmpty at line %d: Void type method should have an empty return" % ctx.start.line)
 
     def enterScope(self, scope):
         self.currentScope = scope
