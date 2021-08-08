@@ -19,3 +19,9 @@ class ReturnMissing(Error):
 
 class ExistingItem(Error):
     pass
+
+class MainNotFound(Error):
+    pass
+
+class MainHasParameters(Error):
+    pass

@@ -43,6 +43,15 @@ class DecafPrinter(DecafListener):
 
     def returnErrorList(self):
         return self.errorList
+    
+    def exitProgram(self, ctx:DecafParser.ProgramContext):
+        try:
+            if not self.mainFound:
+                raise MainNotFound
+        except MainNotFound:
+            print("MainNotFound at line %d: Main method not found" % ctx.start.line)
+
+        return super().exitProgram(ctx)
 
     def enterVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         try:
@@ -72,6 +81,14 @@ class DecafPrinter(DecafListener):
 
         if (methodType == 'void'):
             self.currentMethodVoid = True
+        
+        if (methodName == 'main'):
+            self.mainFound = True
+            try:
+                if ctx.getChild(3).getText() != 'void':
+                    raise MainHasParameters
+            except MainHasParameters:
+                print("MainHasParameters at line %d: Method main is declared with parameters" % ctx.start.line)
 
         # Switch scope to method
         self.enterScope(methodName)
