@@ -9,20 +9,23 @@ from DecafParser import DecafParser
 from DecafListener import DecafListener
 from DecafErrors import *
 
-class SymbolTableItem():
+class VarSymbolTableItem():
     def __init__(self, varId, varType, scope):
         self.varId = varId
         self.varType = varType
-        self.size = 0
         self.scope = scope
-        self.varContext = ""
+        self.offset = 0
 
 class MethodSymbolTableItem():
-    def __init__(self, methodId, methodType, startLine, endLine):
+    def __init__(self, methodId, methodType):
         self.methodId = methodId
         self.methodType = methodType
-        self.startLine = startLine
-        self.endLine = endLine
+
+class StructSymbolTableItem():
+    def __init__(self, varId, varType, structId):
+        self.varId = varId
+        self.varType = varType
+        self.structId = structId
 
 # Maybe a class to check struct?
 
@@ -37,8 +40,9 @@ class DecafPrinter(DecafListener):
         self.currentScope = "global"
 
         # Symbol table related
-        self.symbolTableVar = []
-        self.symbolTableMethod = []
+        self.varSymbolTable = []
+        self.methodSymbolTable = []
+        self.structSymbolTable = []
         super().__init__()
 
     def returnErrorList(self):
@@ -63,11 +67,7 @@ class DecafPrinter(DecafListener):
                     varType = ctx.getChild(0).getText()
                     varId = ctx.getChild(1).getText()
                     # Add to symbol table
-                    newVarStEntry = SymbolTableItem(
-                                        varType,
-                                        varId,
-                                        self.currentScope
-                                    )
+                    newVarStEntry = VarSymbolTableItem(varType, varId, self.currentScope)
 
                     self.addToSymbolTable(item=newVarStEntry)
 
@@ -94,12 +94,7 @@ class DecafPrinter(DecafListener):
         self.enterScope(methodName)
 
         # Add to method symbol table
-        newMethodStEntry = MethodSymbolTableItem(
-                            methodName,
-                            methodType,
-                            ctx.start.line,
-                            ctx.stop.line
-                        )
+        newMethodStEntry = MethodSymbolTableItem(methodName, methodType)
 
         self.addToMethodSymbolTable(item=newMethodStEntry)
 
@@ -143,18 +138,18 @@ class DecafPrinter(DecafListener):
     def enterScope(self, scope):
         self.currentScope = scope
 
-    def addToSymbolTable(self, item: SymbolTableItem):
+    def addToSymbolTable(self, item: VarSymbolTableItem):
         try:
-            if self.symbolTableVar.count == 0:
-                self.symbolTableVar.append(item)
+            if self.varSymbolTable.count == 0:
+                self.varSymbolTable.append(item)
             else:
                 exists = False
-                for i in self.symbolTableVar:
+                for i in self.varSymbolTable:
                     if (item.varId == i.varId and item.scope == i.scope):
                         exists = True
 
                 if not exists:
-                    self.symbolTableVar.append(item)
+                    self.varSymbolTable.append(item)
                 else:
                     raise ExistingItem
                     
@@ -163,21 +158,39 @@ class DecafPrinter(DecafListener):
 
     def addToMethodSymbolTable(self, item: MethodSymbolTableItem):
         try:
-            if self.symbolTableMethod.count == 0:
-                self.symbolTableMethod.append(item)
+            if self.methodSymbolTable.count == 0:
+                self.methodSymbolTable.append(item)
             else:
                 exists = False
-                for i in self.symbolTableMethod:
+                for i in self.methodSymbolTable:
                     if item.methodId == i.methodId:
                         exists = True
 
                 if not exists:
-                    self.symbolTableMethod.append(item)
+                    self.methodSymbolTable.append(item)
                 else:
                     raise ExistingItem
                     
         except ExistingItem:
             print("Method %s is already declared.", item.methodId)
+
+    def addToStructSymbolTable(self, item: StructSymbolTableItem):
+        try:
+            if self.structSymbolTable.count == 0:
+                self.structSymbolTable.append(item)
+            else:
+                exists = False
+                for i in self.structSymbolTable:
+                    if item.structId == i.structId:
+                        exists = True
+
+                if not exists:
+                    self.structSymbolTable.append(item)
+                else:
+                    raise ExistingItem
+                    
+        except ExistingItem:
+            print("Struct %s is already declared.", item.structId)
 
 #---------------------------------------------------------------------------------------------------
 
