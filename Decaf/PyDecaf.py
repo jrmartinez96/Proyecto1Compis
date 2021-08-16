@@ -1,3 +1,4 @@
+
 import sys
 from antlr4 import *
 from antlr4.tree.Trees import  TerminalNode
@@ -161,7 +162,7 @@ class DecafPrinter(DecafListener):
                         returnType = 'void'
                         raise ReturnType
                     
-                    expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable)
+                    expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.getCurrentScope())
                     returnType = expressionType
                     if expressionType != methodType:
                         raise ReturnType
@@ -181,13 +182,41 @@ class DecafPrinter(DecafListener):
     
     # Enter a parse tree produced by DecafParser#methodCall.
     def enterMethodCall(self, ctx:DecafParser.MethodCallContext):
-        methodId = ctx.getChild(0).getText()
+        methodId = ctx.ID().getText()
+        argNameError = ''
+        argTypeError = ''
+        paramTypeError = ''
         try:
+            # Valida si el metodo existe en la tabla de simbolos
             exists = utils.doesMethodExists(methodSymbolTable=self.methodSymbolTable, methodId=methodId)
             if not exists:
                 raise MethodNotDeclared
+            
+            # Obtiene los tipos de los argumentos del metodo llamado
+            methodParams = utils.getMethodParams(self.varSymbolTable, methodId)
+            methodArguments = utils.getMethodCallArgumentsTypes(ctx, self.varSymbolTable, self.methodSymbolTable, self.getCurrentScope())
+
+            if len(methodParams) != len(methodArguments):
+                raise MethodCallArgumentsDoesNotMatchDeclaration
+            
+            for i in range(len(methodParams)):
+                methodParam = methodParams[i]
+                methodArgument = methodArguments[i]
+
+                if methodParam.varType != methodArgument['argType']:
+                    argNameError = methodArgument['argId']
+                    argTypeError = methodArgument['argType']
+                    paramTypeError = methodParam.varType
+                    raise MethodCallArgumentTypeError
+
+
         except MethodNotDeclared:
             print("MethodNotDeclared at line %d: Method '%s' is not declared" % (ctx.start.line, methodId))
+        except MethodCallArgumentsDoesNotMatchDeclaration:
+            print("MethodCallArgumentsDoesNotMatchDeclaration at line %d: Method call '%s' does not have the correct amount of arguments" % (ctx.start.line, methodId))
+        except MethodCallArgumentTypeError:
+            print("MethodCallArgumentTypeError at line %d: Method call argument '%s' type is '%s', and the method declaration '%s' positioned parameter is of type '%s'" % (ctx.start.line, argNameError, argTypeError, methodId, paramTypeError))
+        
         return super().enterMethodCall(ctx)
     
     # --------------------------------------------------------------------------------------------------#

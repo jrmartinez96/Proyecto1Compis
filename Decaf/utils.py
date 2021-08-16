@@ -2,11 +2,11 @@ from PyDecaf import MethodSymbolTableItem, VarSymbolTableItem
 import DecafParser
 from typing import List
 # Solicita una variable a partir de su id
-def getVarItem(varSymbolTable: List[VarSymbolTableItem], varId: str):
+def getVarItemInScope(varSymbolTable: List[VarSymbolTableItem], varId: str, scope: str):
     returnItem = None
 
     for item in varSymbolTable:
-        if item.varId == varId:
+        if item.varId == varId and item.scope == scope:
             returnItem = item
     
     return returnItem
@@ -42,28 +42,28 @@ def doesMethodExists(methodSymbolTable: List[MethodSymbolTableItem], methodId: s
     return exists
 
 # Solicita el tipo de una expresion
-def getExpressionType(ctx: DecafParser.DecafParser.ExpressionContext, varSymbolTable: List[VarSymbolTableItem], methodSymbolTable: List[MethodSymbolTableItem]):
+def getExpressionType(ctx: DecafParser.DecafParser.ExpressionContext, varSymbolTable: List[VarSymbolTableItem], methodSymbolTable: List[MethodSymbolTableItem], scope: str):
     
     expressionChild = ctx.getChild(0)
     expressionChildType = str(type(expressionChild))
 
     if ctx.location() != None:
-        return getLocationType(expressionChild, varSymbolTable)
+        return getLocationType(expressionChild, varSymbolTable, scope)
     elif ctx.methodCall() != None:
         return getMethodCallType(expressionChild, methodSymbolTable)
     elif ctx.literal()!=None:
         return getLiteralType(expressionChild)
     elif expressionChildType == "<class 'DecafParser.DecafParser.ExpressionContext'>":
-        return getExpressionType(expressionChild, varSymbolTable, methodSymbolTable)
+        return getExpressionType(expressionChild, varSymbolTable, methodSymbolTable, scope)
     else:
         expressionChild = ctx.getChild(1)
-        return getExpressionType(expressionChild, varSymbolTable, methodSymbolTable)
+        return getExpressionType(expressionChild, varSymbolTable, methodSymbolTable, scope)
 
 # Solicita el tipo de una location
-def getLocationType(ctx: DecafParser.DecafParser.LocationContext, varSymbolTable: List[VarSymbolTableItem]):
+def getLocationType(ctx: DecafParser.DecafParser.LocationContext, varSymbolTable: List[VarSymbolTableItem], scope: str):
     varId = ctx.getChild(0).getText()
 
-    varItem = getVarItem(varSymbolTable, varId)
+    varItem = getVarItemInScope(varSymbolTable, varId, scope)
     if varItem != None:
         return varItem.varType
     
@@ -93,3 +93,45 @@ def getLiteralType(ctx: DecafParser.DecafParser.LiteralContext):
     
     return None
     
+# Solicita los tipos de los argumentos de MethodCall, retorna una lista con los tipos de los argumentos
+def getMethodCallArgumentsTypes(ctx: DecafParser.DecafParser.MethodCallContext, varSymbolTable: List[VarSymbolTableItem], methodSymbolTable: List[MethodSymbolTableItem], scope: str):
+    argumentsTypes = []
+    arg1Ctx = ctx.arg1()
+
+    if arg1Ctx != None:
+        argumentsTypes = getArg1ArgumentsTypes(arg1Ctx, varSymbolTable, methodSymbolTable, scope)
+    
+    return argumentsTypes
+
+# Solicita los tipos de los argumentos de arg1, retorna una lista con los tipos de los argumentos
+def getArg1ArgumentsTypes(ctx: DecafParser.DecafParser.Arg1Context, varSymbolTable: List[VarSymbolTableItem], methodSymbolTable: List[MethodSymbolTableItem], scope: str):
+    argumentsTypes = []
+    arg2Ctx = ctx.arg2()
+
+    if arg2Ctx != None:
+        argumentsTypes = getArg2ArgumentsTypes(arg2Ctx, varSymbolTable, methodSymbolTable, scope)
+    
+    return argumentsTypes
+
+# Solicita los tipos de los argumentos de arg2, retorna una lista con los tipos de los argumentos
+def getArg2ArgumentsTypes(ctx: DecafParser.DecafParser.Arg2Context, varSymbolTable: List[VarSymbolTableItem], methodSymbolTable: List[MethodSymbolTableItem], scope: str):
+    argumentsTypes = []
+    children = ctx.children
+
+    for child in children:
+        childType = str(type(child))
+        if childType == "<class 'DecafParser.DecafParser.ArgContext'>":
+            argType = getArgType(child, varSymbolTable, methodSymbolTable, scope)
+            argumentsTypes.append({"argId": child.getText(), "argType": argType}) # Si argType es None entonces no existe en la tabla de simbolos
+
+    return argumentsTypes
+            
+    
+
+# Solicita los tipos de los argumentos de arg, retorna una string con el tipo del argumento
+def getArgType(ctx: DecafParser.DecafParser.ArgContext, varSymbolTable: List[VarSymbolTableItem], methodSymbolTable: List[MethodSymbolTableItem], scope: str):
+    expressionContext = ctx.expression()
+    if expressionContext != None:
+        return getExpressionType(expressionContext, varSymbolTable, methodSymbolTable, scope)
+    
+    return None

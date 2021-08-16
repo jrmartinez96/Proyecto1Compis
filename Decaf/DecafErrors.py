@@ -31,3 +31,9 @@ class MainHasParameters(Error):
 
 class MethodNotDeclared(Error):
     pass
+
+class MethodCallArgumentsDoesNotMatchDeclaration(Error):
+    pass
+
+class MethodCallArgumentTypeError(Error):
+    pass
