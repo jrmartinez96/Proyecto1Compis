@@ -25,3 +25,6 @@ class MainNotFound(Error):
 
 class MainHasParameters(Error):
     pass
+
+class MethodNotDeclared(Error):
+    pass

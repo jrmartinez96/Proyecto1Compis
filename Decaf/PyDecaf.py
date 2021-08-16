@@ -8,12 +8,14 @@ from DecafLexer import DecafLexer
 from DecafParser import DecafParser
 from DecafListener import DecafListener
 from DecafErrors import *
+import utils
 
 class VarSymbolTableItem():
-    def __init__(self, varId, varType, scope):
+    def __init__(self, varId, varType, isParam, scope):
         self.varId = varId
         self.varType = varType
         self.scope = scope
+        self.isParam = isParam
         self.offset = 0
 
 class MethodSymbolTableItem():
@@ -67,15 +69,16 @@ class DecafPrinter(DecafListener):
                     varType = ctx.getChild(0).getText()
                     varId = ctx.getChild(1).getText()
                     # Add to symbol table
-                    newVarStEntry = VarSymbolTableItem(varType, varId, self.currentScope)
+                    newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.currentScope, isParam=False)
 
-                    self.addToSymbolTable(item=newVarStEntry)
+                    self.addVarToSymbolTable(item=newVarStEntry)
 
                     return super().enterVarDeclaration(ctx)
         except ArraySizeError:
             print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
 
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
+        # Se obtienen valores de declaracion de method
         methodType = ctx.getChild(0).getText()
         methodName = ctx.getChild(1).getText()
 
@@ -101,6 +104,18 @@ class DecafPrinter(DecafListener):
         # Add params to symbol table
 
         return super().enterMethodDeclaration(ctx)
+    
+    # Enter a parse tree produced by DecafParser#parameter.
+    def enterParameter(self, ctx:DecafParser.ParameterContext):
+        methodId = ctx.parentCtx.getChild(1).getText()
+        parameterType = ctx.getChild(0).getText()
+
+        if parameterType != 'void':
+            varId = ctx.getChild(1).getText()
+            varSymbolTableItem = VarSymbolTableItem(varId=varId, varType=parameterType, isParam=True, scope=methodId)
+            self.addVarToSymbolTable(varSymbolTableItem)
+        
+        return super().enterParameter(ctx)
 
     def enterBlock(self, ctx: DecafParser.BlockContext):
         return super().enterBlock(ctx)
@@ -134,27 +149,36 @@ class DecafPrinter(DecafListener):
             print("Missing return value on non-void method")
         except ReturnNotEmpty:
             print("ReturnNotEmpty at line %d: Void type method should have an empty return" % ctx.start.line)
-
+    
+    # Enter a parse tree produced by DecafParser#methodCall.
+    def enterMethodCall(self, ctx:DecafParser.MethodCallContext):
+        methodId = ctx.getChild(0).getText()
+        try:
+            exists = utils.doesMethodExists(methodSymbolTable=self.methodSymbolTable, methodId=methodId)
+            if not exists:
+                raise MethodNotDeclared
+        except MethodNotDeclared:
+            print("MethodNotDeclared at line %d: Method '%s' is not declared" % (ctx.start.line, methodId))
+        return super().enterMethodCall(ctx)
+    
+    # --------------------------------------------------------------------------------------------------#
+    # --------------------------------------------------------------------------------------------------#
+    # --------------------------------------------------------------------------------------------------#
+    # Funciones de cambio de estado
     def enterScope(self, scope):
         self.currentScope = scope
 
-    def addToSymbolTable(self, item: VarSymbolTableItem):
-        try:
-            if self.varSymbolTable.count == 0:
-                self.varSymbolTable.append(item)
-            else:
-                exists = False
-                for i in self.varSymbolTable:
-                    if (item.varId == i.varId and item.scope == i.scope):
-                        exists = True
+    def addVarToSymbolTable(self, item: VarSymbolTableItem):
+        if self.varSymbolTable.count == 0:
+            self.varSymbolTable.append(item)
+        else:
+            exists = False
+            for i in self.varSymbolTable:
+                if (item.varId == i.varId and item.scope == i.scope):
+                    exists = True
 
-                if not exists:
-                    self.varSymbolTable.append(item)
-                else:
-                    raise ExistingItem
-                    
-        except ExistingItem:
-            print("Symbol %s is already declared in the same context.", item.varId)
+            if not exists:
+                self.varSymbolTable.append(item)
 
     def addToMethodSymbolTable(self, item: MethodSymbolTableItem):
         try:
