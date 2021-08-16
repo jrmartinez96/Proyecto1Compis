@@ -205,16 +205,21 @@ class DecafPrinter(DecafListener):
             return self.scopes[len(self.scopes) - 1]
 
     def addVarToSymbolTable(self, item: VarSymbolTableItem):
-        if self.varSymbolTable.count == 0:
-            self.varSymbolTable.append(item)
-        else:
-            exists = False
-            for i in self.varSymbolTable:
-                if (item.varId == i.varId and item.scope == i.scope):
-                    exists = True
-
-            if not exists:
+        try:
+            if self.varSymbolTable.count == 0:
                 self.varSymbolTable.append(item)
+            else:
+                exists = False
+                for i in self.varSymbolTable:
+                    if (item.varId == i.varId and item.scope == i.scope):
+                        exists = True
+
+                if not exists:
+                    self.varSymbolTable.append(item)
+                else:
+                    raise ExistingItem
+        except ExistingItem:
+            print("Variable %s is already declared.", item.varId)
 
     def addToMethodSymbolTable(self, item: MethodSymbolTableItem):
         try:

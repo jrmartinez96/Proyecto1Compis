@@ -47,11 +47,11 @@ def getExpressionType(ctx: DecafParser.DecafParser.ExpressionContext, varSymbolT
     expressionChild = ctx.getChild(0)
     expressionChildType = str(type(expressionChild))
 
-    if expressionChildType == "<class 'DecafParser.DecafParser.LocationContext'>":
+    if ctx.location() != None:
         return getLocationType(expressionChild, varSymbolTable)
-    elif expressionChildType == "<class 'DecafParser.DecafParser.MethodCallContext'>":
+    elif ctx.methodCall() != None:
         return getMethodCallType(expressionChild, methodSymbolTable)
-    elif expressionChildType == "<class 'DecafParser.DecafParser.LiteralContext'>":
+    elif ctx.literal()!=None:
         return getLiteralType(expressionChild)
     elif expressionChildType == "<class 'DecafParser.DecafParser.ExpressionContext'>":
         return getExpressionType(expressionChild, varSymbolTable, methodSymbolTable)

@@ -11,7 +11,7 @@ class Program
 
 	int OutputInt(int n)
 	{
-		return 1;
+		return n;
 	}
 
 	int InputInt(void)
@@ -24,7 +24,9 @@ class Program
 	{
 		int i;
 		int j;
-		int k;	
+		int k;
+
+		OutputInt(1);
 
 		i = 0;
 		j=0;
