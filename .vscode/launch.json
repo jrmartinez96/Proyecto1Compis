@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "Decaf/PyDecaf.py",
             "console": "internalConsole",
-            "args": ["Decaf/test_files/test.txt"]
+            "args": ["Decaf/test_files/test1.txt"]
         }
     ]
 }

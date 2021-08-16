@@ -39,7 +39,7 @@ class DecafPrinter(DecafListener):
         self.errorList = []
         self.mainFound = False
         self.currentMethodVoid = False
-        self.currentScope = "global"
+        self.scopes = []
 
         # Symbol table related
         self.varSymbolTable = []
@@ -50,12 +50,19 @@ class DecafPrinter(DecafListener):
     def returnErrorList(self):
         return self.errorList
     
+    # Enter a parse tree produced by DecafParser#program.
+    def enterProgram(self, ctx:DecafParser.ProgramContext):
+        self.enterScope('global')
+        return super().enterProgram(ctx)
+    
     def exitProgram(self, ctx:DecafParser.ProgramContext):
         try:
             if not self.mainFound:
                 raise MainNotFound
         except MainNotFound:
             print("MainNotFound at line %d: Main method not found" % ctx.start.line)
+        
+        self.exitScope()
 
         return super().exitProgram(ctx)
 
@@ -69,18 +76,26 @@ class DecafPrinter(DecafListener):
                     varType = ctx.getChild(0).getText()
                     varId = ctx.getChild(1).getText()
                     # Add to symbol table
-                    newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.currentScope, isParam=False)
+                    newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.getCurrentScope(), isParam=False)
 
                     self.addVarToSymbolTable(item=newVarStEntry)
-
-                    return super().enterVarDeclaration(ctx)
+            else:
+                varType = ctx.varType().getText()
+                varId = ctx.ID()
+                newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.getCurrentScope(), isParam=False)
+                self.addVarToSymbolTable(item=newVarStEntry)     
         except ArraySizeError:
             print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
+        
+        return super().enterVarDeclaration(ctx)
 
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         # Se obtienen valores de declaracion de method
         methodType = ctx.getChild(0).getText()
         methodName = ctx.getChild(1).getText()
+
+        # Se ingresa el nuevo scope
+        self.enterScope(methodName)
 
         if (methodType == 'void'):
             self.currentMethodVoid = True
@@ -104,6 +119,11 @@ class DecafPrinter(DecafListener):
         # Add params to symbol table
 
         return super().enterMethodDeclaration(ctx)
+
+    # Exit a parse tree produced by DecafParser#methodDeclaration.
+    def exitMethodDeclaration(self, ctx:DecafParser.MethodDeclarationContext):
+        self.exitScope()
+        return super().exitMethodDeclaration(ctx)
     
     # Enter a parse tree produced by DecafParser#parameter.
     def enterParameter(self, ctx:DecafParser.ParameterContext):
@@ -126,18 +146,25 @@ class DecafPrinter(DecafListener):
             # 0: Return
             # 1: Value
             # 2: ;
-            statementChldn = ctx.getChildren()
-            methodType = ctx.parentCtx.parentCtx.getChild(0).getText()
+            currentMethodItem = utils.getMethodItem(self.methodSymbolTable, self.getCurrentScope())
+            methodType = currentMethodItem.methodType
+            returnType = ''
 
-            # if ctx.getChild(0).getText() != "return":
-            #     raise ReturnMissing
-
-            if methodType == 'void':
-                if ctx.getChild(0).getText() == 'return' and ctx.getChild(1).getText() != '':
-                    raise ReturnNotEmpty
-            else:
-                if ctx.getChild(0).getText() == '':
-                    raise ReturnEmpty
+            # Si el statement empieza con return
+            if ctx.getChild(0).getText() == 'return':
+                if methodType == 'void':
+                    if ctx.getChild(1).getText() != '':
+                        raise ReturnNotEmpty
+                else:
+                    expressionCtx = ctx.getChild(1).getChild(0)
+                    if expressionCtx == None:
+                        returnType = 'void'
+                        raise ReturnType
+                    
+                    expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable)
+                    returnType = expressionType
+                    if expressionType != methodType:
+                        raise ReturnType
 
             self.currentMethodVoid = False
 
@@ -149,6 +176,8 @@ class DecafPrinter(DecafListener):
             print("Missing return value on non-void method")
         except ReturnNotEmpty:
             print("ReturnNotEmpty at line %d: Void type method should have an empty return" % ctx.start.line)
+        except ReturnType:
+            print("ReturnType at line %d: Cannot return expression of type %s when method type is %s" % (ctx.start.line, returnType, methodType))
     
     # Enter a parse tree produced by DecafParser#methodCall.
     def enterMethodCall(self, ctx:DecafParser.MethodCallContext):
@@ -166,7 +195,14 @@ class DecafPrinter(DecafListener):
     # --------------------------------------------------------------------------------------------------#
     # Funciones de cambio de estado
     def enterScope(self, scope):
-        self.currentScope = scope
+        self.scopes.append(scope)
+    
+    def exitScope(self):
+        self.scopes.pop()
+    
+    def getCurrentScope(self):
+        if len(self.scopes) > 0:
+            return self.scopes[len(self.scopes) - 1]
 
     def addVarToSymbolTable(self, item: VarSymbolTableItem):
         if self.varSymbolTable.count == 0:

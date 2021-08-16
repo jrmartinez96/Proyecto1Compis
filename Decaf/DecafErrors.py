@@ -17,6 +17,9 @@ class ReturnNotEmpty(Error):
 class ReturnMissing(Error):
     pass
 
+class ReturnType(Error):
+    pass
+
 class ExistingItem(Error):
     pass
 
