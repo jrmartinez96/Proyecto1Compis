@@ -89,7 +89,7 @@ def getLiteralType(ctx: DecafParser.DecafParser.LiteralContext):
     elif literalChildType == "<class 'DecafParser.DecafParser.Char_literalContext'>":
         return 'char'
     elif literalChildType == "<class 'DecafParser.DecafParser.Bool_literalContext'>":
-        return 'bool'
+        return 'boolean'
     
     return None
     
