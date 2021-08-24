@@ -30,8 +30,6 @@ class StructSymbolTableItem():
         self.varType = varType
         self.structId = structId
 
-# Maybe a class to check struct?
-
 #---------------------------------------------------------------------------------------------------
 
 class DecafPrinter(DecafListener):
@@ -68,23 +66,29 @@ class DecafPrinter(DecafListener):
         return super().exitProgram(ctx)
 
     def enterVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
+        parentCtx = ctx.parentCtx
+        isParentStruct = False
+        structId = ''
+
+        if str(type(parentCtx)) == "<class 'DecafParser.DecafParser.StructDeclarationContext'>":
+            isParentStruct = True
+            structId = parentCtx.ID().getText()
+
         try:
+            varType = ctx.varType().getText()
+            varId = ctx.ID().getText()
+
             if (ctx.NUM() != None):
                 value = ctx.getChild(3).getText()
                 if (int(value) <= 0):
                     raise ArraySizeError
-                else:
-                    varType = ctx.getChild(0).getText()
-                    varId = ctx.getChild(1).getText()
-                    # Add to symbol table
-                    newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.getCurrentScope(), isParam=False)
-
-                    self.addVarToSymbolTable(item=newVarStEntry)
+            
+            if isParentStruct:
+                newStructEntry = StructSymbolTableItem(varId=varId, varType=varType, structId=structId)
+                self.addToStructSymbolTable(item=newStructEntry)
             else:
-                varType = ctx.varType().getText()
-                varId = ctx.ID()
                 newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.getCurrentScope(), isParam=False)
-                self.addVarToSymbolTable(item=newVarStEntry)     
+                self.addVarToSymbolTable(item=newVarStEntry)    
         except ArraySizeError:
             print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
         
@@ -162,12 +166,30 @@ class DecafPrinter(DecafListener):
                         returnType = 'void'
                         raise ReturnType
                     
-                    expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.getCurrentScope())
+                    expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getCurrentScope())
                     returnType = expressionType
                     if expressionType != methodType:
-                        raise ReturnType
+                        if expressionType == None:
+                            raise ReturnExpressionDoesNotExist
+                        else:
+                            raise ReturnType
 
             self.currentMethodVoid = False
+
+            # Si el statement empieza con 'if'
+            if ctx.getChild(0).getText() == 'if':
+                expressionCtx = ctx.expression()
+                expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getCurrentScope())
+                if expressionType != 'boolean':
+                    raise IfExpressionIsNotBoolean
+            
+            # Si el statement empieza con 'while'
+            if ctx.getChild(0).getText() == 'while':
+                expressionCtx = ctx.expression()
+                expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getCurrentScope())
+                if expressionType != 'boolean':
+                    raise WhileExpressionIsNotBoolean
+
 
             return super().enterStatement(ctx)
 
@@ -177,8 +199,14 @@ class DecafPrinter(DecafListener):
             print("Missing return value on non-void method")
         except ReturnNotEmpty:
             print("ReturnNotEmpty at line %d: Void type method should have an empty return" % ctx.start.line)
+        except ReturnExpressionDoesNotExist:
+            print("ReturnExpressionDoesNotExist at line %d: Something in the expression does not exist in the local context" % ctx.start.line)
         except ReturnType:
             print("ReturnType at line %d: Cannot return expression of type %s when method type is %s" % (ctx.start.line, returnType, methodType))
+        except IfExpressionIsNotBoolean:
+            print("IfExpressionIsNotBoolean at line %d: If expression is not of type boolean" % ctx.start.line)
+        except WhileExpressionIsNotBoolean:
+            print("WhileExpressionIsNotBoolean at line %d: While expression is not of type boolean" % ctx.start.line)
     
     # Enter a parse tree produced by DecafParser#methodCall.
     def enterMethodCall(self, ctx:DecafParser.MethodCallContext):
@@ -194,7 +222,7 @@ class DecafPrinter(DecafListener):
             
             # Obtiene los tipos de los argumentos del metodo llamado
             methodParams = utils.getMethodParams(self.varSymbolTable, methodId)
-            methodArguments = utils.getMethodCallArgumentsTypes(ctx, self.varSymbolTable, self.methodSymbolTable, self.getCurrentScope())
+            methodArguments = utils.getMethodCallArgumentsTypes(ctx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getCurrentScope())
 
             if len(methodParams) != len(methodArguments):
                 raise MethodCallArgumentsDoesNotMatchDeclaration
@@ -275,7 +303,7 @@ class DecafPrinter(DecafListener):
             else:
                 exists = False
                 for i in self.structSymbolTable:
-                    if item.structId == i.structId:
+                    if item.structId == i.structId and item.varId == i.varId:
                         exists = True
 
                 if not exists:
@@ -284,19 +312,22 @@ class DecafPrinter(DecafListener):
                     raise ExistingItem
                     
         except ExistingItem:
-            print("Struct %s is already declared.", item.structId)
+            print("Struct var %s is already declared.", item.structId)
 
 #---------------------------------------------------------------------------------------------------
 
 def main(argv):
-    input_stream = FileStream(argv[1])
-    lexer = DecafLexer(input_stream)
-    stream = CommonTokenStream(lexer)
-    parser = DecafParser(stream)
-    tree = parser.program()  
-    printer = DecafPrinter()
-    walker = ParseTreeWalker()
-    walker.walk(printer, tree)
+    try:
+        input_stream = FileStream(argv[1])
+        lexer = DecafLexer(input_stream)
+        stream = CommonTokenStream(lexer)
+        parser = DecafParser(stream)
+        tree = parser.program()  
+        printer = DecafPrinter()
+        walker = ParseTreeWalker()
+        walker.walk(printer, tree)
+    except AttributeError:
+        pass
 
     #traverse(tree, parser.ruleNames)
 

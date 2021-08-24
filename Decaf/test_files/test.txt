@@ -12,9 +12,6 @@ class Program
 		struct A c;
 	};
 
-	struct A y;
-	struct A z;
-
 	int factorial(int n)
 	{
 		if (n==0){
@@ -33,7 +30,11 @@ class Program
 	{return 0;}
 
 	int ReturnNumber(void)
-	{return z.a;}
+	{
+		int a;
+		a = 1;
+		return a;
+	}
 
 	void main(void)
 	{

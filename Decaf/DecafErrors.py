@@ -20,6 +20,9 @@ class ReturnMissing(Error):
 class ReturnType(Error):
     pass
 
+class ReturnExpressionDoesNotExist(Error):
+    pass
+
 class ExistingItem(Error):
     pass
 
@@ -36,4 +39,10 @@ class MethodCallArgumentsDoesNotMatchDeclaration(Error):
     pass
 
 class MethodCallArgumentTypeError(Error):
+    pass
+
+class IfExpressionIsNotBoolean(Error):
+    pass
+
+class WhileExpressionIsNotBoolean(Error):
     pass
