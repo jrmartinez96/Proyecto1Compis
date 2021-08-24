@@ -1,0 +1,10 @@
+antlr4-python2-runtime==4.9.2
+antlr4-python3-runtime==4.9
+appdirs==1.4.4
+blessed==1.18.1
+flyingcircus==0.1.4.0
+pytk==0.0.2.1
+setuptools-scm==6.0.1
+six==1.16.0
+tk==0.1.0
+wcwidth==0.2.5

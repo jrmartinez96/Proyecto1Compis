@@ -9,7 +9,6 @@ from DecafLexer import DecafLexer
 from DecafParser import DecafParser
 from DecafListener import DecafListener
 from DecafErrors import *
-import utils
 
 class VarSymbolTableItem():
     def __init__(self, varId, varType, isParam, scope):
@@ -30,6 +29,9 @@ class StructSymbolTableItem():
         self.varType = varType
         self.structId = structId
 
+
+import utils
+
 #---------------------------------------------------------------------------------------------------
 
 class DecafPrinter(DecafListener):
@@ -44,6 +46,7 @@ class DecafPrinter(DecafListener):
         self.varSymbolTable = []
         self.methodSymbolTable = []
         self.structSymbolTable = []
+
         super().__init__()
 
     def returnErrorList(self):
@@ -59,6 +62,7 @@ class DecafPrinter(DecafListener):
             if not self.mainFound:
                 raise MainNotFound
         except MainNotFound:
+            self.errorList.append("MainNotFound at line %d: Main method not found" % ctx.start.line)
             print("MainNotFound at line %d: Main method not found" % ctx.start.line)
         
         self.exitScope()
@@ -90,6 +94,7 @@ class DecafPrinter(DecafListener):
                 newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.getCurrentScope(), isParam=False)
                 self.addVarToSymbolTable(item=newVarStEntry)    
         except ArraySizeError:
+            self.errorList.append("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
             print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
         
         return super().enterVarDeclaration(ctx)
@@ -111,6 +116,7 @@ class DecafPrinter(DecafListener):
                 if ctx.getChild(3).getText() != 'void':
                     raise MainHasParameters
             except MainHasParameters:
+                self.errorList.append("MainHasParameters at line %d: Method main is declared with parameters" % ctx.start.line)
                 print("MainHasParameters at line %d: Method main is declared with parameters" % ctx.start.line)
 
         # Switch scope to method
@@ -194,18 +200,25 @@ class DecafPrinter(DecafListener):
             return super().enterStatement(ctx)
 
         except ReturnMissing:
+            self.errorList.append("Expected return statement on method")
             print("Expected return statement on method")
         except ReturnEmpty:
+            self.errorList.append("Missing return value on non-void method")
             print("Missing return value on non-void method")
         except ReturnNotEmpty:
+            self.errorList.append("ReturnNotEmpty at line %d: Void type method should have an empty return" % ctx.start.line)
             print("ReturnNotEmpty at line %d: Void type method should have an empty return" % ctx.start.line)
         except ReturnExpressionDoesNotExist:
+            self.errorList.append("ReturnExpressionDoesNotExist at line %d: Something in the expression does not exist in the local context" % ctx.start.line)
             print("ReturnExpressionDoesNotExist at line %d: Something in the expression does not exist in the local context" % ctx.start.line)
         except ReturnType:
+            self.errorList.append("ReturnType at line %d: Cannot return expression of type %s when method type is %s" % (ctx.start.line, returnType, methodType))
             print("ReturnType at line %d: Cannot return expression of type %s when method type is %s" % (ctx.start.line, returnType, methodType))
         except IfExpressionIsNotBoolean:
+            self.errorList.append("IfExpressionIsNotBoolean at line %d: If expression is not of type boolean" % ctx.start.line)
             print("IfExpressionIsNotBoolean at line %d: If expression is not of type boolean" % ctx.start.line)
         except WhileExpressionIsNotBoolean:
+            self.errorList.append("WhileExpressionIsNotBoolean at line %d: While expression is not of type boolean" % ctx.start.line)
             print("WhileExpressionIsNotBoolean at line %d: While expression is not of type boolean" % ctx.start.line)
     
     # Enter a parse tree produced by DecafParser#methodCall.
@@ -239,10 +252,13 @@ class DecafPrinter(DecafListener):
 
 
         except MethodNotDeclared:
+            self.errorList.append("MethodNotDeclared at line %d: Method '%s' is not declared" % (ctx.start.line, methodId))
             print("MethodNotDeclared at line %d: Method '%s' is not declared" % (ctx.start.line, methodId))
         except MethodCallArgumentsDoesNotMatchDeclaration:
+            self.errorList.append("MethodCallArgumentsDoesNotMatchDeclaration at line %d: Method call '%s' does not have the correct amount of arguments" % (ctx.start.line, methodId))
             print("MethodCallArgumentsDoesNotMatchDeclaration at line %d: Method call '%s' does not have the correct amount of arguments" % (ctx.start.line, methodId))
         except MethodCallArgumentTypeError:
+            self.errorList.append("MethodCallArgumentTypeError at line %d: Method call argument '%s' type is '%s', and the method declaration '%s' positioned parameter is of type '%s'" % (ctx.start.line, argNameError, argTypeError, methodId, paramTypeError))
             print("MethodCallArgumentTypeError at line %d: Method call argument '%s' type is '%s', and the method declaration '%s' positioned parameter is of type '%s'" % (ctx.start.line, argNameError, argTypeError, methodId, paramTypeError))
         
         return super().enterMethodCall(ctx)
@@ -276,7 +292,8 @@ class DecafPrinter(DecafListener):
                 else:
                     raise ExistingItem
         except ExistingItem:
-            print("Variable %s is already declared.", item.varId)
+            self.errorList.append("Variable %s is already declared." % item.varId)
+            print("Variable %s is already declared." % item.varId)
 
     def addToMethodSymbolTable(self, item: MethodSymbolTableItem):
         try:
@@ -294,7 +311,8 @@ class DecafPrinter(DecafListener):
                     raise ExistingItem
                     
         except ExistingItem:
-            print("Method %s is already declared.", item.methodId)
+            self.errorList.append("Method %s is already declared." % item.methodId)
+            print("Method %s is already declared." % item.methodId)
 
     def addToStructSymbolTable(self, item: StructSymbolTableItem):
         try:
@@ -312,7 +330,8 @@ class DecafPrinter(DecafListener):
                     raise ExistingItem
                     
         except ExistingItem:
-            print("Struct var %s is already declared.", item.structId)
+            self.errorList.append("Struct var %s is already declared." % item.structId)
+            print("Struct var %s is already declared." % item.structId)
 
 #---------------------------------------------------------------------------------------------------
 
@@ -326,6 +345,20 @@ def main(argv):
         printer = DecafPrinter()
         walker = ParseTreeWalker()
         walker.walk(printer, tree)
+    except AttributeError:
+        pass
+
+def compile_file(filePath):
+    try:
+        input_stream = FileStream(filePath)
+        lexer = DecafLexer(input_stream)
+        stream = CommonTokenStream(lexer)
+        parser = DecafParser(stream)
+        tree = parser.program()  
+        printer = DecafPrinter()
+        walker = ParseTreeWalker()
+        walker.walk(printer, tree)
+        return printer.errorList
     except AttributeError:
         pass
 
