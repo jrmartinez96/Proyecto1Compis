@@ -45,8 +45,7 @@ class Program
 
 
 		i = 0;
-		j=0;
-		z.a = 3;	
+		j=0;	
 
 		while(i<=10)
 		{
@@ -54,12 +53,9 @@ class Program
 			
 			if(y[j].b[0]==5)
 			{
-				y[j].b[0]=z.a;
-				k=factorial(ReturnNumber());
 				OutputInt(k);
 			}		
 
-			y[j].c.a=factorial(y[j].b[0]);
 			OutputInt(y[j].c.a);
 			i = i + 1;
 		}

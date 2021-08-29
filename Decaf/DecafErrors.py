@@ -20,9 +20,6 @@ class ReturnMissing(Error):
 class ReturnType(Error):
     pass
 
-class ReturnExpressionDoesNotExist(Error):
-    pass
-
 class ExistingItem(Error):
     pass
 
@@ -45,4 +42,25 @@ class IfExpressionIsNotBoolean(Error):
     pass
 
 class WhileExpressionIsNotBoolean(Error):
+    pass
+
+class VariableNotDeclared(Error):
+    pass
+
+class ExpressionDoesNotExist(Error):
+    pass
+
+class AssignmentType(Error):
+    pass
+
+class ExpressionMustBeType(Error):
+    pass
+
+class EqualOpType(Error):
+    pass
+
+class ExpressionIsNotBoolean(Error):
+    pass
+
+class ExpressionIsNotInt(Error):
     pass
