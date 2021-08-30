@@ -64,3 +64,6 @@ class ExpressionIsNotBoolean(Error):
 
 class ExpressionIsNotInt(Error):
     pass
+
+class VarIsNotArray(Error):
+    pass

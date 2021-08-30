@@ -11,11 +11,12 @@ from DecafListener import DecafListener
 from DecafErrors import *
 
 class VarSymbolTableItem():
-    def __init__(self, varId, varType, isParam, scope):
+    def __init__(self, varId, varType, isParam, scope, isArray=False):
         self.varId = varId
         self.varType = varType
         self.scope = scope
         self.isParam = isParam
+        self.isArray = isArray
         self.offset = 0
 
 class MethodSymbolTableItem():
@@ -24,10 +25,11 @@ class MethodSymbolTableItem():
         self.methodType = methodType
 
 class StructSymbolTableItem():
-    def __init__(self, varId, varType, structId):
+    def __init__(self, varId, varType, structId, isArray=False):
         self.varId = varId
         self.varType = varType
         self.structId = structId
+        self.isArray = isArray
 
 
 import utils
@@ -73,6 +75,7 @@ class DecafPrinter(DecafListener):
         parentCtx = ctx.parentCtx
         isParentStruct = False
         structId = ''
+        isArray = False
 
         if str(type(parentCtx)) == "<class 'DecafParser.DecafParser.StructDeclarationContext'>":
             isParentStruct = True
@@ -84,14 +87,15 @@ class DecafPrinter(DecafListener):
 
             if (ctx.NUM() != None):
                 value = ctx.getChild(3).getText()
+                isArray = True
                 if (int(value) <= 0):
                     raise ArraySizeError
             
             if isParentStruct:
-                newStructEntry = StructSymbolTableItem(varId=varId, varType=varType, structId=structId)
+                newStructEntry = StructSymbolTableItem(varId=varId, varType=varType, structId=structId, isArray=isArray)
                 self.addToStructSymbolTable(item=newStructEntry)
             else:
-                newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.getCurrentScope(), isParam=False)
+                newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.getCurrentScope(), isParam=False, isArray=isArray)
                 self.addVarToSymbolTable(item=newVarStEntry)    
         except ArraySizeError:
             self.errorList.append("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
@@ -244,6 +248,68 @@ class DecafPrinter(DecafListener):
             self.errorList.append("AssignmentType at line %d: '%s' type cannot be assign to '%s' type" % (ctx.start.line, expressionType, locationType))
             print("AssignmentType at line %d: '%s' type cannot be assign to '%s' type" % (ctx.start.line, expressionType, locationType))
     
+    # Enter a parse tree produced by DecafParser#location.
+    def enterLocation(self, ctx:DecafParser.LocationContext):
+        scopes = self.getScopes()
+        try:
+            parentCtx = ctx.parentCtx
+            idCtx = ctx.ID()
+            expressionCtx = ctx.expression()
+            if expressionCtx != None:
+                # Verifica si el ID es de tipo array
+                varId = idCtx.getText()
+                if str(type(parentCtx)) == "<class 'DecafParser.DecafParser.LocationContext'>": # Si el padre es un struct
+                    parentVarId = parentCtx.ID().getText()
+                    parentVarItem = None
+                    for i in reversed(range(0, len(scopes))):
+                        scope = scopes[i]
+                        parentVarItem = utils.getVarItemInScope(self.varSymbolTable, parentVarId, scope)
+                        if parentVarItem != None:
+                            break
+                    
+                    if parentVarItem == None:
+                        raise VariableNotDeclared
+                    
+                    structId = parentVarItem.varType.replace('struct', '', 1)
+                    
+                    structItem = utils.getStructItem(self.structSymbolTable, structId, varId)
+
+                    if structItem == None:
+                        raise VariableNotDeclared
+                    
+                    if not structItem.isArray:
+                        raise VarIsNotArray
+
+                else: # Si es una variable
+                    varItem = None
+                    for i in reversed(range(0, len(scopes))):
+                        scope = scopes[i]
+                        varItem = utils.getVarItemInScope(self.varSymbolTable, varId, scope)
+                        if varItem != None:
+                            break
+                    
+                    if varItem == None:
+                        raise VariableNotDeclared
+                    
+                    if not varItem.isArray:
+                        raise VarIsNotArray
+                
+                # Verifica si la expression es de tipo int
+                expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getScopes())
+                
+                if expressionType != 'int':
+                    raise ExpressionIsNotInt
+
+        except VarIsNotArray:
+            self.errorList.append("VarIsNotArray at line %d: Variable is not declared as an array" % ctx.start.line)
+            print("VarIsNotArray at line %d: Variable is not declared as an array" % ctx.start.line)
+        except VariableNotDeclared:
+            self.errorList.append("VariableNotDeclared at line %d: Variable is not declared." % ctx.start.line)
+            print("VariableNotDeclared at line %d: Variable is not declared." % ctx.start.line)
+        except ExpressionIsNotInt:
+            self.errorList.append("ExpressionIsNotInt at line %d: Expression inside '[' ']' is not of type int." % ctx.start.line)
+            print("ExpressionIsNotInt at line %d: Expression inside '[' ']' is not of type int." % ctx.start.line)
+
     # Enter a parse tree produced by DecafParser#expression.
     def enterExpression(self, ctx:DecafParser.ExpressionContext):
         expressionNumberError = 1
