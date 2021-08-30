@@ -65,7 +65,7 @@ statement
     | 'return' expressionOom ';'
     | methodCall ';'
     | block
-    | location '=' expression
+    | location '=' expression ';'
     | (expression)? ';' 
     ;
 expressionOom: expression |;

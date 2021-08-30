@@ -202,7 +202,7 @@ class DecafPrinter(DecafListener):
                 locationCtx = ctx.location()
                 expressionCtx = ctx.expression()
 
-                locationType = utils.getLocationType(locationCtx, self.varSymbolTable, self.structSymbolTable, self.getCurrentScope(), False, '')
+                locationType = utils.getLocationType(locationCtx, self.varSymbolTable, self.structSymbolTable, self.getScopes(), False, '')
                 expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getScopes())
 
                 if locationType == None:
@@ -382,7 +382,7 @@ class DecafPrinter(DecafListener):
             
             # Obtiene los tipos de los argumentos del metodo llamado
             methodParams = utils.getMethodParams(self.varSymbolTable, methodId)
-            methodArguments = utils.getMethodCallArgumentsTypes(ctx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getCurrentScope())
+            methodArguments = utils.getMethodCallArgumentsTypes(ctx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getScopes())
 
             if len(methodParams) != len(methodArguments):
                 raise MethodCallArgumentsDoesNotMatchDeclaration
