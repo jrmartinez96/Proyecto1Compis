@@ -1,3 +1,20 @@
+from antlr4.error.ErrorListener import ErrorListener
+
+class MyErrorListener( ErrorListener ):
+    
+    def __init__(self):
+        self.errorsList = []
+        super(MyErrorListener, self).__init__()
+    
+    def addErrorList(self, line, column, msg):
+        self.errorsList.append("line %d:%d %s" % (line, column, msg))
+
+    def getErrorsList(self):
+        return self.errorsList
+
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        self.addErrorList(line, column, msg)
+
 class Error(Exception):
     """Base class for other exceptions"""
     pass

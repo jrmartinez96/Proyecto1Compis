@@ -107,6 +107,33 @@ class DecafListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by DecafParser#ifStatement.
+    def enterIfStatement(self, ctx:DecafParser.IfStatementContext):
+        pass
+
+    # Exit a parse tree produced by DecafParser#ifStatement.
+    def exitIfStatement(self, ctx:DecafParser.IfStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by DecafParser#elseStatement.
+    def enterElseStatement(self, ctx:DecafParser.ElseStatementContext):
+        pass
+
+    # Exit a parse tree produced by DecafParser#elseStatement.
+    def exitElseStatement(self, ctx:DecafParser.ElseStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by DecafParser#whileStatement.
+    def enterWhileStatement(self, ctx:DecafParser.WhileStatementContext):
+        pass
+
+    # Exit a parse tree produced by DecafParser#whileStatement.
+    def exitWhileStatement(self, ctx:DecafParser.WhileStatementContext):
+        pass
+
+
     # Enter a parse tree produced by DecafParser#expressionOom.
     def enterExpressionOom(self, ctx:DecafParser.ExpressionOomContext):
         pass

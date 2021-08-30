@@ -22,7 +22,7 @@ LINE_COMMENT
 // -----------------------------------------------------------------------------------------------------------------------------------------
 
 // Reglas PARSER
-program:'class' 'Program' '{' (declaration)* '}';
+program:'class' ID '{' (declaration)* '}';
 declaration
     : structDeclaration
     | varDeclaration
@@ -60,14 +60,17 @@ parameterType
     ;
 block: '{' (varDeclaration)* (statement)* '}';
 statement
-    : 'if' '(' expression ')' block ( 'else' block )?
-    | 'while' '('expression')' block
+    : ifStatement ( elseStatement )?
+    | whileStatement
     | 'return' expressionOom ';'
     | methodCall ';'
     | block
     | location '=' expression ';'
     | (expression)? ';' 
     ;
+ifStatement: 'if' '(' expression ')' block;
+elseStatement: 'else' block;
+whileStatement: 'while' '('expression')' block;
 expressionOom: expression |;
 location: (ID|ID '[' expression ']') ('.' location)?;
 expression 

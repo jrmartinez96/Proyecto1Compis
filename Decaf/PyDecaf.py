@@ -42,7 +42,11 @@ class DecafPrinter(DecafListener):
         self.errorList = []
         self.mainFound = False
         self.currentMethodVoid = False
+        self.currentMethod = ''
         self.scopes = []
+        self.ifCount = 0
+        self.elseCount = 0
+        self.whileCount = 0
 
         # Symbol table related
         self.varSymbolTable = []
@@ -98,8 +102,8 @@ class DecafPrinter(DecafListener):
                 newVarStEntry = VarSymbolTableItem(varType=varType, varId=varId, scope=self.getCurrentScope(), isParam=False, isArray=isArray)
                 self.addVarToSymbolTable(item=newVarStEntry)    
         except ArraySizeError:
-            self.errorList.append("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
-            print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
+            self.errorList.append("ArraySizeError at line %d:%d Array size must be bigger than 0" % (ctx.start.line, ctx.start.column))
+            print("ArraySizeError at line %d:%d Array size must be bigger than 0" % (ctx.start.line, ctx.start.column))
         
         return super().enterVarDeclaration(ctx)
 
@@ -110,6 +114,7 @@ class DecafPrinter(DecafListener):
 
         # Se ingresa el nuevo scope
         self.enterScope(methodName)
+        self.currentMethod = methodName
 
         if (methodType == 'void'):
             self.currentMethodVoid = True
@@ -120,11 +125,8 @@ class DecafPrinter(DecafListener):
                 if ctx.getChild(3).getText() != 'void':
                     raise MainHasParameters
             except MainHasParameters:
-                self.errorList.append("MainHasParameters at line %d: Method main is declared with parameters" % ctx.start.line)
-                print("MainHasParameters at line %d: Method main is declared with parameters" % ctx.start.line)
-
-        # Switch scope to method
-        self.enterScope(methodName)
+                self.errorList.append("MainHasParameters at line %d:%d Method main is declared with parameters" % (ctx.start.line, ctx.start.column))
+                print("MainHasParameters at line %d:%d Method main is declared with parameters" % (ctx.start.line, ctx.start.column))
 
         # Add to method symbol table
         newMethodStEntry = MethodSymbolTableItem(methodName, methodType)
@@ -158,7 +160,7 @@ class DecafPrinter(DecafListener):
     def enterStatement(self, ctx: DecafParser.StatementContext):
         try:
 
-            currentMethodItem = utils.getMethodItem(self.methodSymbolTable, self.getCurrentScope())
+            currentMethodItem = utils.getMethodItem(self.methodSymbolTable, self.currentMethod)
             methodType = currentMethodItem.methodType
             returnType = ''
 
@@ -186,20 +188,6 @@ class DecafPrinter(DecafListener):
                             raise ReturnType
 
             self.currentMethodVoid = False
-
-            # Si el statement empieza con 'if'
-            if ctx.getChild(0).getText() == 'if':
-                expressionCtx = ctx.expression()
-                expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getScopes())
-                if expressionType != 'boolean':
-                    raise IfExpressionIsNotBoolean
-            
-            # Si el statement empieza con 'while'
-            if ctx.getChild(0).getText() == 'while':
-                expressionCtx = ctx.expression()
-                expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getScopes())
-                if expressionType != 'boolean':
-                    raise WhileExpressionIsNotBoolean
             
             # Si es una asignacion
             if ctx.location() != None:
@@ -217,9 +205,6 @@ class DecafPrinter(DecafListener):
                 if locationType != expressionType:
                     raise AssignmentType
 
-
-            return super().enterStatement(ctx)
-
         except ReturnMissing:
             self.errorList.append("Expected return statement on method")
             print("Expected return statement on method")
@@ -227,27 +212,64 @@ class DecafPrinter(DecafListener):
             self.errorList.append("Missing return value on non-void method")
             print("Missing return value on non-void method")
         except ReturnNotEmpty:
-            self.errorList.append("ReturnNotEmpty at line %d: Void type method should have an empty return" % ctx.start.line)
-            print("ReturnNotEmpty at line %d: Void type method should have an empty return" % ctx.start.line)
+            self.errorList.append("ReturnNotEmpty at line %d:%d Void type method should have an empty return" % (ctx.start.line, ctx.start.column))
+            print("ReturnNotEmpty at line %d:%d Void type method should have an empty return" % (ctx.start.line, ctx.start.column))
         except ExpressionDoesNotExist:
-            self.errorList.append("ExpressionDoesNotExist at line %d: Something in the expression does not exist in the local context" % ctx.start.line)
-            print("ExpressionDoesNotExist at line %d: Something in the expression does not exist in the local context" % ctx.start.line)
+            self.errorList.append("ExpressionDoesNotExist at line %d:%d Something in the expression does not exist in the local context" % (ctx.start.line, ctx.start.column))
+            print("ExpressionDoesNotExist at line %d:%d Something in the expression does not exist in the local context" % (ctx.start.line, ctx.start.column))
         except VariableNotDeclared:
-            self.errorList.append("VariableNotDeclared at line %d: Variable is not declared." % ctx.start.line)
-            print("VariableNotDeclared at line %d: Variable is not declared." % ctx.start.line)
+            self.errorList.append("VariableNotDeclared at line %d:%d Variable is not declared." % (ctx.start.line, ctx.start.column))
+            print("VariableNotDeclared at line %d:%d Variable is not declared." % (ctx.start.line, ctx.start.column))
         except ReturnType:
-            self.errorList.append("ReturnType at line %d: Cannot return expression of type %s when method type is %s" % (ctx.start.line, returnType, methodType))
-            print("ReturnType at line %d: Cannot return expression of type %s when method type is %s" % (ctx.start.line, returnType, methodType))
-        except IfExpressionIsNotBoolean:
-            self.errorList.append("IfExpressionIsNotBoolean at line %d: If expression is not of type boolean" % ctx.start.line)
-            print("IfExpressionIsNotBoolean at line %d: If expression is not of type boolean" % ctx.start.line)
-        except WhileExpressionIsNotBoolean:
-            self.errorList.append("WhileExpressionIsNotBoolean at line %d: While expression is not of type boolean" % ctx.start.line)
-            print("WhileExpressionIsNotBoolean at line %d: While expression is not of type boolean" % ctx.start.line)
+            self.errorList.append("ReturnType at line %d:%d Cannot return expression of type %s when method type is %s" % (ctx.start.line, ctx.start.column, returnType, methodType))
+            print("ReturnType at line %d:%d Cannot return expression of type %s when method type is %s" % (ctx.start.line, ctx.start.column, returnType, methodType))
         except AssignmentType:
-            self.errorList.append("AssignmentType at line %d: '%s' type cannot be assign to '%s' type" % (ctx.start.line, expressionType, locationType))
-            print("AssignmentType at line %d: '%s' type cannot be assign to '%s' type" % (ctx.start.line, expressionType, locationType))
+            self.errorList.append("AssignmentType at line %d:%d '%s' type cannot be assign to '%s' type" % (ctx.start.line, ctx.start.column, expressionType, locationType))
+            print("AssignmentType at line %d:%d '%s' type cannot be assign to '%s' type" % (ctx.start.line, ctx.start.column, expressionType, locationType))
     
+    # Enter a parse tree produced by DecafParser#ifStatement.
+    def enterIfStatement(self, ctx:DecafParser.IfStatementContext):
+        try:
+            expressionCtx = ctx.expression()
+            expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getScopes())
+            self.enterScope("if" + str(self.ifCount))
+            self.ifCount = self.ifCount + 1
+            if expressionType != 'boolean':
+                raise IfExpressionIsNotBoolean
+        except IfExpressionIsNotBoolean:
+            self.errorList.append("IfExpressionIsNotBoolean at line %d:%d If expression is not of type boolean" % (ctx.start.line, ctx.start.column))
+            print("IfExpressionIsNotBoolean at line %d:%d If expression is not of type boolean" % (ctx.start.line, ctx.start.column))
+    
+    # Exit a parse tree produced by DecafParser#ifStatement.
+    def exitIfStatement(self, ctx:DecafParser.IfStatementContext):
+        self.exitScope()
+    
+    # Enter a parse tree produced by DecafParser#elseStatement.
+    def enterElseStatement(self, ctx:DecafParser.ElseStatementContext):
+        self.enterScope("else" + str(self.elseCount))
+        self.elseCount = self.elseCount + 1
+
+    # Exit a parse tree produced by DecafParser#elseStatement.
+    def exitElseStatement(self, ctx:DecafParser.ElseStatementContext):
+        self.exitScope()
+
+    # Enter a parse tree produced by DecafParser#whileStatement.
+    def enterWhileStatement(self, ctx:DecafParser.WhileStatementContext):
+        try:
+            expressionCtx = ctx.expression()
+            expressionType = utils.getExpressionType(expressionCtx, self.varSymbolTable, self.methodSymbolTable, self.structSymbolTable, self.getScopes())
+            self.enterScope("while" + str(self.whileCount))
+            self.whileCount = self.whileCount + 1
+            if expressionType != 'boolean':
+                raise WhileExpressionIsNotBoolean
+        except WhileExpressionIsNotBoolean:
+            self.errorList.append("WhileExpressionIsNotBoolean at line %d:%d While expression is not of type boolean" % (ctx.start.line, ctx.start.column))
+            print("WhileExpressionIsNotBoolean at line %d:%d While expression is not of type boolean" % (ctx.start.line, ctx.start.column))
+    
+    # Exit a parse tree produced by DecafParser#whileStatement.
+    def exitWhileStatement(self, ctx:DecafParser.WhileStatementContext):
+        self.exitScope()
+
     # Enter a parse tree produced by DecafParser#location.
     def enterLocation(self, ctx:DecafParser.LocationContext):
         scopes = self.getScopes()
@@ -301,14 +323,14 @@ class DecafPrinter(DecafListener):
                     raise ExpressionIsNotInt
 
         except VarIsNotArray:
-            self.errorList.append("VarIsNotArray at line %d: Variable is not declared as an array" % ctx.start.line)
-            print("VarIsNotArray at line %d: Variable is not declared as an array" % ctx.start.line)
+            self.errorList.append("VarIsNotArray at line %d:%d Variable is not declared as an array" % (ctx.start.line, ctx.start.column))
+            print("VarIsNotArray at line %d:%d Variable is not declared as an array" % (ctx.start.line, ctx.start.column))
         except VariableNotDeclared:
-            self.errorList.append("VariableNotDeclared at line %d: Variable is not declared." % ctx.start.line)
-            print("VariableNotDeclared at line %d: Variable is not declared." % ctx.start.line)
+            self.errorList.append("VariableNotDeclared at line %d:%d Variable is not declared." % (ctx.start.line, ctx.start.column))
+            print("VariableNotDeclared at line %d:%d Variable is not declared." % (ctx.start.line, ctx.start.column))
         except ExpressionIsNotInt:
-            self.errorList.append("ExpressionIsNotInt at line %d: Expression inside '[' ']' is not of type int." % ctx.start.line)
-            print("ExpressionIsNotInt at line %d: Expression inside '[' ']' is not of type int." % ctx.start.line)
+            self.errorList.append("ExpressionIsNotInt at line %d:%d Expression inside '[' ']' is not of type int." % (ctx.start.line, ctx.start.column))
+            print("ExpressionIsNotInt at line %d:%d Expression inside '[' ']' is not of type int." % (ctx.start.line, ctx.start.column))
 
     # Enter a parse tree produced by DecafParser#expression.
     def enterExpression(self, ctx:DecafParser.ExpressionContext):
@@ -419,20 +441,20 @@ class DecafPrinter(DecafListener):
                     raise ExpressionIsNotInt
                 
         except ExpressionDoesNotExist:
-            self.errorList.append("ExpressionDoesNotExist at line %d: Something in the expression %d does not exist in the local context" % (ctx.start.line, expressionNumberError))
-            print("ExpressionDoesNotExist at line %d: Something in the expression %d does not exist in the local context" % (ctx.start.line, expressionNumberError))
+            self.errorList.append("ExpressionDoesNotExist at line %d:%d Something in the expression %d does not exist in the local context" % (ctx.start.line, ctx.start.column, expressionNumberError))
+            print("ExpressionDoesNotExist at line %d:%d Something in the expression %d does not exist in the local context" % (ctx.start.line, ctx.start.column, expressionNumberError))
         except ExpressionMustBeType:
-            self.errorList.append("ExpressionMustBeType at line %d: Expression %d must be 'char', 'int' or 'boolean'" % (ctx.start.line, expressionNumberError))
-            print("ExpressionMustBeType at line %d: Expression %d must be 'char', 'int' or 'boolean'" % (ctx.start.line, expressionNumberError))
+            self.errorList.append("ExpressionMustBeType at line %d:%d Expression %d must be 'char', 'int' or 'boolean'" % (ctx.start.line, ctx.start.column, expressionNumberError))
+            print("ExpressionMustBeType at line %d:%d Expression %d must be 'char', 'int' or 'boolean'" % (ctx.start.line, ctx.start.column, expressionNumberError))
         except EqualOpType:
-            self.errorList.append("EqualOpType at line %d: Expressions types are not the same in equal operand" % (ctx.start.line))
-            print("EqualOpType at line %d: Expressions types are not the same in equal operand" % (ctx.start.line))
+            self.errorList.append("EqualOpType at line %d:%d Expressions types are not the same in equal operand" % (ctx.start.line, ctx.start.column))
+            print("EqualOpType at line %d:%d Expressions types are not the same in equal operand" % (ctx.start.line, ctx.start.column))
         except ExpressionIsNotBoolean:
-            self.errorList.append("ExpressionIsNotBoolean at line %d: Expression must be boolean" % (ctx.start.line))
-            print("ExpressionIsNotBoolean at line %d: Expression must be boolean" % (ctx.start.line))
+            self.errorList.append("ExpressionIsNotBoolean at line %d:%d Expression must be boolean" % (ctx.start.line, ctx.start.column))
+            print("ExpressionIsNotBoolean at line %d:%d Expression must be boolean" % (ctx.start.line, ctx.start.column))
         except ExpressionIsNotInt:
-            self.errorList.append("ExpressionIsNotInt at line %d: Expression must be int" % (ctx.start.line))
-            print("ExpressionIsNotInt at line %d: Expression must be int" % (ctx.start.line))
+            self.errorList.append("ExpressionIsNotInt at line %d:%d Expression must be int" % (ctx.start.line, ctx.start.column))
+            print("ExpressionIsNotInt at line %d:%d Expression must be int" % (ctx.start.line, ctx.start.column))
 
     # Enter a parse tree produced by DecafParser#methodCall.
     def enterMethodCall(self, ctx:DecafParser.MethodCallContext):
@@ -465,14 +487,14 @@ class DecafPrinter(DecafListener):
 
 
         except MethodNotDeclared:
-            self.errorList.append("MethodNotDeclared at line %d: Method '%s' is not declared" % (ctx.start.line, methodId))
-            print("MethodNotDeclared at line %d: Method '%s' is not declared" % (ctx.start.line, methodId))
+            self.errorList.append("MethodNotDeclared at line %d:%d Method '%s' is not declared" % (ctx.start.line, ctx.start.column, methodId))
+            print("MethodNotDeclared at line %d:%d Method '%s' is not declared" % (ctx.start.line, ctx.start.column, methodId))
         except MethodCallArgumentsDoesNotMatchDeclaration:
-            self.errorList.append("MethodCallArgumentsDoesNotMatchDeclaration at line %d: Method call '%s' does not have the correct amount of arguments" % (ctx.start.line, methodId))
-            print("MethodCallArgumentsDoesNotMatchDeclaration at line %d: Method call '%s' does not have the correct amount of arguments" % (ctx.start.line, methodId))
+            self.errorList.append("MethodCallArgumentsDoesNotMatchDeclaration at line %d:%d Method call '%s' does not have the correct amount of arguments" % (ctx.start.line, ctx.start.column, methodId))
+            print("MethodCallArgumentsDoesNotMatchDeclaration at line %d:%d Method call '%s' does not have the correct amount of arguments" % (ctx.start.line, ctx.start.column, methodId))
         except MethodCallArgumentTypeError:
-            self.errorList.append("MethodCallArgumentTypeError at line %d: Method call argument '%s' type is '%s', and the method declaration '%s' positioned parameter is of type '%s'" % (ctx.start.line, argNameError, argTypeError, methodId, paramTypeError))
-            print("MethodCallArgumentTypeError at line %d: Method call argument '%s' type is '%s', and the method declaration '%s' positioned parameter is of type '%s'" % (ctx.start.line, argNameError, argTypeError, methodId, paramTypeError))
+            self.errorList.append("MethodCallArgumentTypeError at line %d:%d Method call argument '%s' type is '%s', and the method declaration '%s' positioned parameter is of type '%s'" % (ctx.start.line, ctx.start.column, argNameError, argTypeError, methodId, paramTypeError))
+            print("MethodCallArgumentTypeError at line %d:%d Method call argument '%s' type is '%s', and the method declaration '%s' positioned parameter is of type '%s'" % (ctx.start.line, ctx.start.column, argNameError, argTypeError, methodId, paramTypeError))
         
         return super().enterMethodCall(ctx)
     
@@ -558,12 +580,19 @@ def main(argv):
         lexer = DecafLexer(input_stream)
         stream = CommonTokenStream(lexer)
         parser = DecafParser(stream)
+        myErrorListener = MyErrorListener()
+        parser.addErrorListener(myErrorListener)
         tree = parser.program()  
         printer = DecafPrinter()
         walker = ParseTreeWalker()
         walker.walk(printer, tree)
-    except AttributeError:
-        pass
+    except AttributeError as e:
+        print(e)
+    except Exception as e:
+        print(e)
+    
+    for error in myErrorListener.getErrorsList():
+        print(error)
 
 def compile_file(filePath):
     try:
@@ -571,15 +600,17 @@ def compile_file(filePath):
         lexer = DecafLexer(input_stream)
         stream = CommonTokenStream(lexer)
         parser = DecafParser(stream)
+        myErrorListener = MyErrorListener()
+        parser.addErrorListener(myErrorListener)
         tree = parser.program()  
         printer = DecafPrinter()
         walker = ParseTreeWalker()
         walker.walk(printer, tree)
-        return printer.errorList
-    except AttributeError:
-        pass
-
-    #traverse(tree, parser.ruleNames)
+        return printer.errorList + myErrorListener.getErrorsList()
+    except AttributeError as e:
+        print(e)
+    except Exception as e:
+        print(e)
 
 def traverse(tree, rule_names, indent = 0):
     if tree.getText() == "<EOF>":

@@ -1,63 +1,13 @@
 class Program
 {
 
-	struct A
-	{
-		int a;
-	};
-
-	struct B
-	{
-		int b[5];
-		struct A c;
-	};
-
-	int factorial(int n)
-	{
-		if (n==0){
-			return 1;
-		} else {
-			return n*factorial(n-1);
-		}
-	}
-
-	int OutputInt(int n)
-	{
-		return 1;
-	}
-
-	int InputInt(void)
-	{return 0;}
-
-	int ReturnNumber(void)
-	{
-		int a;
-		a = 1;
-		return true;
-	}
-
 	void main(void)
-	{
-		struct B y[5];
-		int i;
-		int j;
-		int k;	
+	{	
 
-
-		i = 0;
-		j=0;	
-
-		while(i<=10)
+		while(1<=10)
 		{
-			y[j].b[0]=InputInt();
-			
-			if(y[j].b[0]==5)
-			{
-				OutputInt(k);
-			}		
-
-			OutputInt(y[j].c.a);
-			i = i + 1;
+			int a;
+			a = 123;
 		}
 		return;
 	}
