@@ -107,5 +107,5 @@ arith_op_first: '||';
 
 literal : int_literal | char_literal | bool_literal ;
 int_literal : NUM ;
-char_literal : '\'' CHAR '\'' ;
+char_literal : CHAR;
 bool_literal : 'true' | 'false' ;
