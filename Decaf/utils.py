@@ -1,4 +1,4 @@
-from PyDecaf import MethodSymbolTableItem, VarSymbolTableItem, StructSymbolTableItem
+from analize_semantic import MethodSymbolTableItem, VarSymbolTableItem, StructSymbolTableItem, DecafParser
 import DecafParser
 from typing import List
 # Solicita una variable a partir de su id
@@ -21,6 +21,7 @@ def getMethodItem(methodSymbolTable: List[MethodSymbolTableItem], methodId: str)
     
     return returnItem
 
+# Solicita un item de struct
 def getStructItem(structSymbolTable: List[StructSymbolTableItem], structId: str, varId: str):
     returnItem = None
 
@@ -49,6 +50,57 @@ def doesMethodExists(methodSymbolTable: List[MethodSymbolTableItem], methodId: s
             exists = True
     
     return exists
+
+# Solicita los items de un struct
+def getStructItemsFromStructId(structSymbolTable: List[StructSymbolTableItem], structId: str):
+    returnItems = []
+
+    for item in structSymbolTable:
+        if item.structId == structId:
+            returnItems.append(item)
+    
+    return returnItems
+
+# Solicita el tamaño singular de una variable
+def getSingularVarSize(varSymbolTable: List[VarSymbolTableItem], structSymbolTable: List[StructSymbolTableItem], varId: str, scopes: str):
+    size = 0
+    for i in reversed(range(0, len(scopes))):
+        scope = scopes[i]
+        varItem = getVarItemInScope(varSymbolTable, varId, scope)
+        if varItem != None:
+            if varItem.varType == 'int':
+                size = 4
+            elif varItem.varType == 'char':
+                size = 1
+            elif varItem.varType == 'boolean':
+                size = 1
+            else:
+                structVarType = varItem.varType.replace('struct', '', 1)
+                items = getStructItemsFromStructId(structSymbolTable, structVarType)
+
+                for item in items:
+                    size += item.size
+            break
+    
+    return size
+
+# Solicita una variable a partir de su id
+def getVarItemInScopes(varSymbolTable: List[VarSymbolTableItem], varId: str, scopes: list):
+    returnItem = None
+
+    for i in range(0, len(scopes)):
+        scope = scopes[len(scopes) - 1 - i]
+        item = getVarItemInScope(varSymbolTable, varId, scope)
+        if item != None:
+            returnItem = item
+            break
+    
+    return returnItem
+
+# --------------------------------------------------------------------------------------------------#
+# --------------------------------------------------------------------------------------------------#
+# --------------------------------------------------------------------------------------------------#
+# Funciones de tipos
 
 # Solicita el tipo de una expresion
 def getExpressionType(ctx: DecafParser.DecafParser.ExpressionContext, varSymbolTable: List[VarSymbolTableItem], methodSymbolTable: List[MethodSymbolTableItem], structSymbolTable: List[StructSymbolTableItem], scopes: List[str]):
