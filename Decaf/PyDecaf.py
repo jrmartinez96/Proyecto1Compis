@@ -55,7 +55,24 @@ def compile_file(filePath):
         printer = Semantic()
         walker = ParseTreeWalker()
         walker.walk(printer, tree)
-        return printer.errorList + myErrorListener.getErrorsList()
+
+        semantic_errors = printer.errorList + myErrorListener.getErrorsList()
+
+        if len(semantic_errors) == 0:
+            varSymbolTable = printer.varSymbolTable
+            methodSymbolTable = printer.methodSymbolTable
+            structSymbolTable = printer.structSymbolTable
+            intermediate_printer = IntermediateCode(varSymbolTable, methodSymbolTable, structSymbolTable)
+            intemediate_walker = ParseTreeWalker()
+            intemediate_walker.walk(intermediate_printer, tree)
+
+            with open('Decaf/test_files/intermediate.txt', "w") as output_file:
+                text = ''
+                for line in intermediate_printer.lines:
+                    text = text + line + '\n'
+                output_file.write(text)
+        
+        return semantic_errors
     except AttributeError as e:
         print(e)
     except Exception as e:

@@ -334,7 +334,8 @@ class IntermediateCode(DecafListener):
                 
                 lines.append(self.copy_assignation(temp_count, '0'))
                 lines.append(self.copy_assignation(temp_addition, '0'))
-                lines.append(self.assignation(temp_temp_addition, temp_addition, last_temp1, '+', gotoLabel=label))
+                lines.append(self.add_label(label))
+                lines.append(self.assignation(temp_temp_addition, temp_addition, last_temp1, '+'))
                 lines.append(self.copy_assignation(temp_addition, temp_temp_addition))
                 lines.append(self.assignation(temp_temp_count, temp_count, '1', '+'))
                 lines.append(self.copy_assignation(temp_count, temp_temp_count))
@@ -384,7 +385,7 @@ class IntermediateCode(DecafListener):
                 lines.append(self.assignation(index_temp, last_temp_expression, var_singular_size, '*'))
 
                 array_offset_temp = self.new_temp()
-                lines.append(self.assignation(array_offset_temp, temp, index_temp, '*'))
+                lines.append(self.assignation(array_offset_temp, temp, index_temp, '+'))
 
                 # Location
                 location_code = self.get_location_code(ctx.location(), struct_item.varType)
@@ -406,7 +407,7 @@ class IntermediateCode(DecafListener):
                 lines.append(self.assignation(index_temp, last_temp_expression, var_singular_size, '*'))
 
                 array_offset_temp = self.new_temp()
-                lines.append(self.assignation(array_offset_temp, temp, index_temp, '*'))
+                lines.append(self.assignation(array_offset_temp, temp, index_temp, '+'))
             
             # Si solo hay location
             elif ctx.location() != None:
