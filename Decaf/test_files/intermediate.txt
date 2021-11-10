@@ -1,129 +1,115 @@
-func begin factorial
-	t1 = n
-	t2 = 0
-	t3 = t1 == t2
-	ifFalse t3 goto L0
-	t4 = 1
-	return t4
-	goto L1
+func begin Minimo
+	t1 = [40]
+	t2 = t1 * 0
+	t3 = [0][t2]
+	[44] = t3
+	t4 = [40]
+	[48] = t4
 L0:
-	t5 = n
-	t6 = n
-	t7 = 1
-	t8 = t6 - t7
-	param t8
-	call factorial, 1
-	t9 = result
-	t10 = 0
-	t11 = 0
+	t5 = [40]
+	t6 = 10
+	t7 = t5 < t6
+	ifFalse t7 goto L1
+	t8 = [40]
+	t9 = t8 * 0
+	t10 = [0][t9]
+	t11 = [44]
+	t12 = t10 < t11
+	ifFalse t12 goto L2
+	t13 = [40]
+	t14 = t13 * 0
+	t15 = [0][t14]
+	[44] = t15
+	t16 = [40]
+	[48] = t16
 L2:
-	t13 = t11 + t5
-	t11 = t13
-	t12 = t10 + 1
-	t10 = t12
-	if t10 < t9 goto L2
-	t14 = t11
-	return t14
+	t17 = [40]
+	t18 = 1
+	t19 = t17 + t18
+	[40] = t19
+	goto L0
 L1:
+	t20 = [48]
+	return t20
+func end
+func begin Ordenar
+	t21 = 0
+	[52] = t21
+L3:
+	t22 = [52]
+	t23 = 10
+	t24 = t22 < t23
+	ifFalse t24 goto L4
+	t25 = [52]
+	param t25
+	call Minimo, 1
+	t26 = result
+	[64] = t26
+	t27 = [64]
+	t28 = t27 * 0
+	t29 = [0][t28]
+	[60] = t29
+	t30 = [52]
+	t31 = t30 * 0
+	t32 = [0][t31]
+	t33 = [64]
+	t34 = t33 * 0
+	[0][t34] = t32
+	t35 = [60]
+	t36 = [52]
+	t37 = t36 * 0
+	[0][t37] = t35
+	t38 = [52]
+	t39 = 1
+	t40 = t38 + t39
+	[52] = t40
+	goto L3
+L4:
 func end
 func begin OutputInt
 func end
 func begin InputInt
-	t15 = 0
-	return t15
-func end
-func begin ReturnNumber
-	t16 = 0
-	t17 = z[t16]
-	return t17
+	t41 = 0
+	return t41
 func end
 func begin main
-	t18 = 0
-	i = t18
-	t19 = 0
-	j = t19
-	t20 = 3
-	t21 = 0
-	z[t21] = t20
-L3:
-	t22 = i
-	t23 = 10
-	t24 = t22 <= t23
-	ifFalse t24 goto L4
-	call InputInt, 0
-	t25 = result
-	t26 = j
-	t27 = 0
-	t28 = 0
-	t29 = t28 * 20
-	t30 = t27 + t29
-	t31 = t26 * 24
-	t32 = t31 + t30
-	y[t32] = t25
-	t33 = j
-	t34 = 0
-	t35 = 0
-	t36 = t35 * 20
-	t37 = t34 + t36
-	t38 = t33 * 24
-	t39 = t38 + t37
-	t40 = y[t39]
-	t41 = 5
-	t42 = t40 == t41
-	ifFalse t42 goto L5
-	t43 = 0
-	t44 = z[t43]
-	t45 = j
-	t46 = 0
-	t47 = 0
-	t48 = t47 * 20
-	t49 = t46 + t48
-	t50 = t45 * 24
-	t51 = t50 + t49
-	y[t51] = t44
-	call ReturnNumber, 0
-	t52 = result
-	param t52
-	call factorial, 1
-	t53 = result
-	k = t53
-	t54 = k
-	param t54
-	call OutputInt, 1
-	t55 = result
+	t42 = 0
+	[72] = t42
 L5:
-	t56 = j
-	t57 = 0
-	t58 = 0
-	t59 = t58 * 20
-	t60 = t57 + t59
-	t61 = t56 * 24
-	t62 = t61 + t60
-	t63 = y[t62]
-	param t63
-	call factorial, 1
-	t64 = result
-	t65 = j
-	t66 = 20
-	t67 = 0
-	t68 = 20 + t67
-	t69 = t65 * 24
-	t70 = t69 + t68
-	y[t70] = t64
-	t71 = j
-	t72 = 20
-	t73 = 0
-	t74 = 20 + t73
-	t75 = t71 * 24
-	t76 = t75 + t74
-	t77 = y[t76]
-	param t77
+	t43 = [72]
+	t44 = 10
+	t45 = t43 < t44
+	ifFalse t45 goto L6
+	call InputInt, 0
+	t46 = result
+	t47 = [72]
+	t48 = t47 * 0
+	[0][t48] = t46
+	t49 = [72]
+	t50 = 1
+	t51 = t49 + t50
+	[72] = t51
+	goto L5
+L6:
+	call Ordenar, 0
+	t52 = result
+	t53 = 0
+	[72] = t53
+L7:
+	t54 = [72]
+	t55 = 10
+	t56 = t54 < t55
+	ifFalse t56 goto L8
+	t57 = [72]
+	t58 = t57 * 0
+	t59 = [0][t58]
+	param t59
 	call OutputInt, 1
-	t78 = result
-	t79 = i
-	t80 = 1
-	t81 = t79 + t80
-	i = t81
-	goto L3
-L4:
+	t60 = result
+	t61 = [72]
+	t62 = 1
+	t63 = t61 + t62
+	[72] = t63
+	goto L7
+L8:
 func end

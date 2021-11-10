@@ -14,8 +14,10 @@ class IntermediateCode(DecafListener):
         self.elseCount = 0
         self.whileCount = 0
 
-        # Flags or misc
+        # labels
         self.temp_number = 0
+        self.temps_to_release = []
+        self.last_temp = ''
         self.label_number = 0
         self.last_location_variable = ''
 
@@ -70,27 +72,27 @@ class IntermediateCode(DecafListener):
         
     # Enter a parse tree produced by DecafParser#ifStatement.
     def enterIfStatement(self, ctx:DecafParser.IfStatementContext):
-        self.enterScope("if" + str(self.ifCount))
+        pass
         
     # Exit a parse tree produced by DecafParser#ifStatement.
     def exitIfStatement(self, ctx:DecafParser.IfStatementContext):
-        self.exitScope()
+        pass
     
     # Enter a parse tree produced by DecafParser#elseStatement.
     def enterElseStatement(self, ctx:DecafParser.ElseStatementContext):
-        self.enterScope("else" + str(self.elseCount))
+        pass
 
     # Exit a parse tree produced by DecafParser#elseStatement.
     def exitElseStatement(self, ctx:DecafParser.ElseStatementContext):
-        self.exitScope()
+        pass
 
     # Enter a parse tree produced by DecafParser#whileStatement.
     def enterWhileStatement(self, ctx:DecafParser.WhileStatementContext):
-        self.enterScope("while" + str(self.whileCount))
+        pass
         
     # Exit a parse tree produced by DecafParser#whileStatement.
     def exitWhileStatement(self, ctx:DecafParser.WhileStatementContext):
-        self.exitScope()
+        pass
 
     # Enter a parse tree produced by DecafParser#location.
     def enterLocation(self, ctx:DecafParser.LocationContext):
@@ -171,8 +173,14 @@ class IntermediateCode(DecafListener):
         lines = lines + expression_code
         lines.append(self.conditional_jump(end_label, last_expression_temp, isIfFalse=True))
 
+
+        self.enterScope("while" + str(self.whileCount))
+        self.whileCount = self.whileCount + 1
+
         block_code = self.get_block_code(ctx.block())
         lines = lines + block_code
+
+        self.exitScope()
 
         lines.append(self.inconditional_jump(start_label))
         lines.append(self.add_label(end_label))
@@ -195,8 +203,13 @@ class IntermediateCode(DecafListener):
             lines.append(self.conditional_jump(end_label, last_expression_temp, isIfFalse=True))
 
             # Block del code
+            self.enterScope("if" + str(self.ifCount))
+            self.ifCount = self.ifCount + 1
+
             block_code = self.get_block_code(ifCtx.block())
             lines = lines + block_code
+
+            self.exitScope()
 
             # Label del end
             lines.append(self.add_label(end_label))
@@ -213,16 +226,26 @@ class IntermediateCode(DecafListener):
             lines.append(self.conditional_jump(else_label, last_expression_temp, isIfFalse=True))
 
             # Block del if
+            self.enterScope("if" + str(self.ifCount))
+            self.ifCount = self.ifCount + 1
+
             if_block_code = self.get_block_code(ifCtx.block())
             lines = lines + if_block_code
             lines.append(self.inconditional_jump(end_label))
+
+            self.exitScope()
 
             # Label del else
             lines.append(self.add_label(else_label))
 
             # Block del else
+            self.enterScope("else" + str(self.elseCount))
+            self.elseCount = self.elseCount + 1
+
             else_block_code = self.get_block_code(elseCtx.block())
             lines = lines + else_block_code
+
+            self.exitScope()
 
             # Label del end
             lines.append(self.add_label(end_label))
@@ -421,6 +444,11 @@ class IntermediateCode(DecafListener):
         else:
             id = ctx.ID().getText()
 
+            item = utils.getVarItemInScopes(self.varSymbolTable, id, self.getScopes())
+
+            id = "[%d]" % (item.base)
+
+
             last_temp_expression = ''
             if ctx.expression() != None:
                 expression_code = self.get_expression_code(ctx.expression())
@@ -523,6 +551,9 @@ class IntermediateCode(DecafListener):
         self.temp_number = self.temp_number + 1
         temp_name = "t%d" % (self.temp_number)
         return temp_name
+    
+    def release_temps(self):
+        pass
     
     def new_label(self):
         label_name = "L%d" % (self.label_number)

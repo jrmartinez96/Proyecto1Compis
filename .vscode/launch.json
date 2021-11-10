@@ -5,9 +5,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "Decaf/ui.py",
+            "program": "Decaf/PyDecaf.py",
             "console": "internalConsole",
-            "args": ["Decaf/test_files/multiple_tests.txt"]
+            "args": ["Decaf/test_files/quicksort.txt"]
         }
     ]
 }
