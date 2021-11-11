@@ -15,9 +15,9 @@ class IntermediateCode(DecafListener):
         self.whileCount = 0
 
         # labels
-        self.temp_number = 0
+        self.temps = []
         self.temps_to_release = []
-        self.last_temp = ''
+        self.last_temp = -1
         self.label_number = 0
         self.last_location_variable = ''
 
@@ -126,6 +126,7 @@ class IntermediateCode(DecafListener):
             expression_code = self.get_expression_code(ctx.expression())
             lines = lines + expression_code
             last_expression_temp = self.get_last_temp()
+            self.release_temps()
 
             location_code = self.get_location_code(ctx.location(), isLeftSide=True)
             lines = lines + location_code
@@ -156,6 +157,7 @@ class IntermediateCode(DecafListener):
             else:
                 lines = lines + expressionOm_code
                 last_expressionOm_temp = self.get_last_temp()
+                self.release_temps()
                 lines.append('\treturn %s' % (last_expressionOm_temp))
         
         return lines
@@ -169,6 +171,7 @@ class IntermediateCode(DecafListener):
         lines.append(self.add_label(start_label))
         expression_code = self.get_expression_code(ctx.expression())
         last_expression_temp = self.get_last_temp()
+        self.release_temps()
 
         lines = lines + expression_code
         lines.append(self.conditional_jump(end_label, last_expression_temp, isIfFalse=True))
@@ -196,6 +199,7 @@ class IntermediateCode(DecafListener):
             # Expression del if
             expression_code = self.get_expression_code(ifCtx.expression())
             last_expression_temp = self.get_last_temp()
+            self.release_temps()
 
             lines = lines + expression_code
 
@@ -220,6 +224,7 @@ class IntermediateCode(DecafListener):
             # Expression de la condicional
             expression_code = self.get_expression_code(ifCtx.expression())
             last_expression_temp = self.get_last_temp()
+            self.release_temps()
 
             lines = lines + expression_code
 
@@ -275,12 +280,14 @@ class IntermediateCode(DecafListener):
             expression_code = self.get_expression_code(ctx.expression())
             lines = lines + expression_code
             last_temp = self.get_last_temp()
+            self.release_temps()
             temp_unary = self.new_temp()
             lines.append(self.unary_assignation(temp_unary, last_temp, "-"))
         elif ctx.children[0].getText() == '!':
             expression_code = self.get_expression_code(ctx.expression())
             lines = lines + expression_code
             last_temp = self.get_last_temp()
+            self.release_temps()
             temp_unary = self.new_temp()
             lines.append(self.unary_assignation(temp_unary, last_temp, "!"))
         elif ctx.arith_op_first() != None:
@@ -289,8 +296,10 @@ class IntermediateCode(DecafListener):
 
             expression1_code = self.get_expression_code(expression1)
             last_temp1 = self.get_last_temp()
+            self.release_temps()
             expression2_code = self.get_expression_code(expression2)
             last_temp2 = self.get_last_temp()
+            self.release_temps()
 
             temp = self.new_temp()
 
@@ -302,8 +311,10 @@ class IntermediateCode(DecafListener):
 
             expression1_code = self.get_expression_code(expression1)
             last_temp1 = self.get_last_temp()
+            self.release_temps()
             expression2_code = self.get_expression_code(expression2)
             last_temp2 = self.get_last_temp()
+            self.release_temps()
 
             temp = self.new_temp()
 
@@ -315,8 +326,10 @@ class IntermediateCode(DecafListener):
 
             expression1_code = self.get_expression_code(expression1)
             last_temp1 = self.get_last_temp()
+            self.release_temps()
             expression2_code = self.get_expression_code(expression2)
             last_temp2 = self.get_last_temp()
+            self.release_temps()
 
             temp = self.new_temp()
 
@@ -329,8 +342,10 @@ class IntermediateCode(DecafListener):
 
             expression1_code = self.get_expression_code(expression1)
             last_temp1 = self.get_last_temp()
+            self.release_temps()
             expression2_code = self.get_expression_code(expression2)
             last_temp2 = self.get_last_temp()
+            self.release_temps()
 
             temp = self.new_temp()
 
@@ -344,8 +359,10 @@ class IntermediateCode(DecafListener):
 
                 expression1_code = self.get_expression_code(expression1)
                 last_temp1 = self.get_last_temp()
+                self.release_temps()
                 expression2_code = self.get_expression_code(expression2)
                 last_temp2 = self.get_last_temp()
+                self.release_temps()
                 lines = lines + expression1_code + expression2_code
 
                 temp_count = self.new_temp()
@@ -401,6 +418,7 @@ class IntermediateCode(DecafListener):
                 expression_code = self.get_expression_code(ctx.expression())
                 lines = lines + expression_code
                 last_temp_expression = self.get_last_temp()
+                self.release_temps()
 
                 var_singular_size = '%d' % (struct_item.size)
                 
@@ -414,6 +432,7 @@ class IntermediateCode(DecafListener):
                 location_code = self.get_location_code(ctx.location(), struct_item.varType)
                 lines = lines + location_code
                 last_temp_location = self.get_last_temp()
+                self.release_temps()
 
                 array_location_offset = self.new_temp()
                 lines.append(self.assignation(array_location_offset, array_offset_temp, last_temp_location, '+'))
@@ -423,6 +442,7 @@ class IntermediateCode(DecafListener):
                 expression_code = self.get_expression_code(ctx.expression())
                 lines = lines + expression_code
                 last_temp_expression = self.get_last_temp()
+                self.release_temps()
 
                 var_singular_size = '%d' % (struct_item.size)
                 
@@ -437,6 +457,7 @@ class IntermediateCode(DecafListener):
                 location_code = self.get_location_code(ctx.location(), struct_item.varType)
                 lines = lines + location_code
                 last_temp_location = self.get_last_temp()
+                self.release_temps()
 
                 final_offset = self.new_temp()
                 lines.append(self.assignation(final_offset, offset, last_temp_location, '+'))
@@ -454,6 +475,7 @@ class IntermediateCode(DecafListener):
                 expression_code = self.get_expression_code(ctx.expression())
                 lines = lines + expression_code
                 last_temp_expression = self.get_last_temp()
+                self.release_temps()
             
             last_temp_location = ''
             if ctx.location() != None:
@@ -462,6 +484,7 @@ class IntermediateCode(DecafListener):
                 location_code = self.get_location_code(ctx.location(), varItem.varType)
                 lines = lines + location_code
                 last_temp_location = self.get_last_temp()
+                self.release_temps()
             
             if last_temp_location != '' or last_temp_expression != '':
                 if last_temp_expression != '' and last_temp_location != '':
@@ -517,7 +540,8 @@ class IntermediateCode(DecafListener):
                 for child in arg2_children:
                     if child.getText() != ',':
                         child_lines = self.get_expression_code(child.expression())
-                        last_temp = "t%d" % (self.temp_number)
+                        last_temp = self.get_last_temp()
+                        self.release_temps()
                         lines = lines + child_lines
                         params.append(last_temp)
         
@@ -548,12 +572,37 @@ class IntermediateCode(DecafListener):
             return self.scopes[len(self.scopes) - 1]
 
     def new_temp(self):
-        self.temp_number = self.temp_number + 1
-        temp_name = "t%d" % (self.temp_number)
-        return temp_name
+        isTempsFull = True
+        free_index = -1
+        
+        for index in range(len(self.temps)):
+            temp = self.temps[index]
+            if temp == 0:
+                isTempsFull = False
+                free_index = index
+                break
+        
+        temp_id = 0
+        if isTempsFull:
+            self.temps.append(1)
+            temp_id = len(self.temps) - 1
+        else:
+            self.temps[free_index] = 1
+            temp_id = free_index
+        
+        self.last_temp = temp_id
+        self.temps_to_release.append(temp_id)
+        return self.get_last_temp()
     
     def release_temps(self):
-        pass
+        temps = self.temps_to_release
+        for temp_id in temps:
+            for i in range(len(self.temps)):
+                if i == temp_id and i != self.last_temp:
+                    self.temps[i] = 0
+                    
+        # Vaciar temps del scope
+        self.temps_to_release = [self.last_temp]
     
     def new_label(self):
         label_name = "L%d" % (self.label_number)
@@ -561,7 +610,7 @@ class IntermediateCode(DecafListener):
         return label_name
     
     def get_last_temp(self):
-        return "t%d" % (self.temp_number)
+        return 't%d' %(self.last_temp)
 
     def add_lines(self, lines: list):
         for line in lines:
