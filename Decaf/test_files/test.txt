@@ -3,11 +3,13 @@ class Program
 
 	void main(void)
 	{	
-
-		while(1<=10)
+		int a;
+		int b;
+		a = 1;
+		b = 1;
+		while(a<=10)
 		{
-			int a;
-			a = 123;
+			a = a + b;
 		}
 		return;
 	}

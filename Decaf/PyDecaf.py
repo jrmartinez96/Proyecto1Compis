@@ -2,6 +2,7 @@
 import sys
 from antlr4 import *
 from antlr4.tree.Trees import  TerminalNode
+from source_code import SourceCode
 from analize_semantic import Semantic, DecafParser, DecafErrors
 from DecafLexer import DecafLexer
 from intermediate_code import IntermediateCode
@@ -32,11 +33,15 @@ def main(argv):
             with open('Decaf/test_files/intermediate.txt', "w") as output_file:
                 text = ''
                 for line in intermediate_printer.lines:
-                    text = text + line + '\n'
+                    text = text + line.toString() + '\n'
                 output_file.write(text)
+            
+            sourceCode = SourceCode(intermediate_printer.lines, varSymbolTable)
+            sourceCode.generate()
 
         for error in myErrorListener.getErrorsList():
             print(error)
+        
     except AttributeError as e:
         print(e)
     except Exception as e:

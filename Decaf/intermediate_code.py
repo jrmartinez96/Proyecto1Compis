@@ -4,6 +4,219 @@ from DecafListener import DecafListener
 import DecafErrors
 import utils
 
+class AssignationInstruction():
+    def __init__(self, assignTo: str = '', operand1: str = '', operator: str = '', operand2: str = '', goToLabel: str = ''):
+        self.assignTo = assignTo
+        self.operand1 = operand1
+        self.operator = operator
+        self.operand2 = operand2
+        self.goToLabel = goToLabel
+
+class CopyAssignationInstruction():
+    def __init__(self, assignTo: str, operand1: str, goToLabel: str = ''):
+        self.assignTo = assignTo
+        self.operand1 = operand1
+        self.goToLabel = goToLabel
+
+class CopyAssignationIndexInstruction():
+    def __init__(self, assignTo: str, operand1: str, index: int, isAssignToItem: bool = False, goToLabel: str = ''):
+        self.assignTo = assignTo
+        self.operand1 = operand1
+        self.index = index
+        self.isAssignToItem = isAssignToItem
+        self.goToLabel = goToLabel
+
+class UnaryAssignationInstruction():
+    def __init__(self, assignTo: str, operand1: str, operator: str, goToLabel: str = ''):
+        self.assignTo = assignTo
+        self.operand1 = operand1
+        self.operator = operator
+        self.goToLabel = goToLabel
+
+class InconditionalJumpInstruction():
+    def __init__(self, label: str, goToLabel: str = ''):
+        self.label = label
+        self.goToLabel = goToLabel
+
+class ConditionalJumpInstruction():
+    def __init__(self, label: str, condition: str, isIfFalse: bool = False, goToLabel: str = ''):
+        self.label = label
+        self.isIfFalse = isIfFalse
+        self.condition = condition
+        self.goToLabel = goToLabel
+        
+class ConditionalRelopJumpInstruction():
+    def __init__(self, label: str, operand1: str, operand2: str, relop: str, goToLabel: str = ''):
+        self.label = label
+        self.operand1 = operand1
+        self.operand2 = operand2
+        self.relop = relop
+        self.goToLabel = goToLabel
+
+class ProcedureParamInstrunction():
+    def __init__(self, param: str = '', goToLabel: str = ''):
+        self.param = param
+        self.goToLabel = goToLabel
+
+class ProcedureInstruction():
+    def __init__(self, procedure: str, params: list, goToLabel: str = ''):
+        self.procedure = procedure
+        self.params = params
+        self.goToLabel = goToLabel
+
+class LabelInstruction():
+    def __init__(self, label:str):
+        self.label = label
+
+class FuncDeclarationBeginInstruction():
+    def __init__(self, name:str):
+        self.name = name
+
+class FuncDeclarationEndInstruction():
+    def __init__(self):
+        pass
+
+class FuncReturnInstruction():
+    def __init__(self, variable:str = ''):
+        self.variable = variable
+
+class ThreeAddressInstruction():
+    def __init__(self,
+                 # Instrucciones de asignacion
+                 assignationInstruction: AssignationInstruction = None, 
+                 copyAssignationInstruction: CopyAssignationInstruction = None,
+                 copyAssignationIndexInstruction: CopyAssignationIndexInstruction = None,
+                 unaryAssignationInstruction: UnaryAssignationInstruction = None,
+                 # Instrucciones de saltos
+                 inconditionalJumpInstruction: InconditionalJumpInstruction = None,
+                 conditionalJumpInstruction: ConditionalJumpInstruction = None,
+                 conditionalRelopJumpInstruction: ConditionalRelopJumpInstruction = None,
+                 # Instrucciones de procedures
+                 paramInstrunction: ProcedureParamInstrunction = None,
+                 procedureInstruction: ProcedureInstruction = None,
+                 # Instruccion de label
+                 labelInstruction: LabelInstruction = None,
+                 # Func declaration
+                 funcDeclarationBeginInstruction: FuncDeclarationBeginInstruction = None,
+                 funcDeclarationEndInstruction: FuncDeclarationEndInstruction = None,
+                 funcReturnInstruction: FuncReturnInstruction = None
+                 ):
+        self.assignationInstruction = assignationInstruction
+        self.copyAssignationInstruction = copyAssignationInstruction
+        self.copyAssignationIndexInstruction = copyAssignationIndexInstruction
+        self.unaryAssignationInstruction = unaryAssignationInstruction
+        self.inconditionalJumpInstruction = inconditionalJumpInstruction
+        self.conditionalJumpInstruction = conditionalJumpInstruction
+        self.conditionalRelopJumpInstruction = conditionalRelopJumpInstruction
+        self.paramInstrunction = paramInstrunction
+        self.procedureInstruction = procedureInstruction
+        self.labelInstruction = labelInstruction
+        self.funcDeclarationBeginInstruction = funcDeclarationBeginInstruction
+        self.funcDeclarationEndInstruction = funcDeclarationEndInstruction
+        self.funcReturnInstruction = funcReturnInstruction
+    
+    def toString(self):
+        line = ''
+        if self.assignationInstruction != None:
+            a = self.assignationInstruction
+            line = "%s = %s %s %s" % (a.assignTo, a.operand1, a.operator, a.operand2)
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+        
+        elif self.copyAssignationInstruction != None:
+            a = self.copyAssignationInstruction
+            line = "%s = %s" % (a.assignTo, a.operand1)
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+            
+        elif self.copyAssignationIndexInstruction != None:
+            a = self.copyAssignationIndexInstruction
+            line = ''
+            if a.isAssignToItem:
+                line = "%s[%s] = %s" % (a.assignTo, str(a.index), a.operand1)
+            else:
+                line = "%s = %s[%s]" % (a.assignTo, a.operand1, str(a.index))
+
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+            
+        elif self.unaryAssignationInstruction != None:
+            a = self.unaryAssignationInstruction
+            line = "%s = %s%s" % (a.assignTo, a.operator, a.operand1)
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+            
+        elif self.inconditionalJumpInstruction != None:
+            a = self.inconditionalJumpInstruction
+            line = "goto %s" % (a.label)
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+            
+        elif self.conditionalJumpInstruction != None:
+            a = self.conditionalJumpInstruction
+            line = ''
+            if not a.isIfFalse:
+                line = "if %s goto %s" % (a.condition, a.label)
+            else:
+                line = "ifFalse %s goto %s" % (a.condition, a.label)
+            
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+            
+        elif self.conditionalRelopJumpInstruction != None:
+            a = self.conditionalRelopJumpInstruction
+            line = "if %s %s %s goto %s" % (a.operand1, a.relop, a.operand2, a.label) 
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+            
+        elif self.paramInstrunction != None:
+            a = self.paramInstrunction
+            line = "param %s" % (a.param)
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+        elif self.procedureInstruction != None:
+            a = self.procedureInstruction
+            line = "call %s, %s" % (a.procedure, str(len(a.params))) 
+            if a.goToLabel != '':
+                line = '%s: ' % (a.goToLabel) + line
+            else:
+                line = "\t" + line
+            
+        elif self.labelInstruction != None:
+            a = self.labelInstruction
+            line = "%s:" % (a.label)
+        
+        elif self.funcDeclarationBeginInstruction != None:
+            a = self.funcDeclarationBeginInstruction
+            line = "func begin %s" % (a.name)
+        
+        elif self.funcDeclarationEndInstruction != None:
+            line = "func end"
+        
+        elif self.funcReturnInstruction != None:
+            a = self.funcReturnInstruction
+            line = "\treturn %s" % (a.variable)
+    
+        return line
+        
+
+
 #---------------------------------------------------------------------------------------------------
 
 class IntermediateCode(DecafListener):
@@ -46,14 +259,16 @@ class IntermediateCode(DecafListener):
 
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         method_name = ctx.ID().getText()
-        self.lines.append("func begin %s" % (method_name))
+        a = ThreeAddressInstruction(funcDeclarationBeginInstruction=FuncDeclarationBeginInstruction(method_name))
+        self.lines.append(a)
         self.enterScope(method_name)
         block_code = self.get_block_code(ctx.block())
         self.add_lines(block_code)
 
     # Exit a parse tree produced by DecafParser#methodDeclaration.
     def exitMethodDeclaration(self, ctx:DecafParser.MethodDeclarationContext):
-        self.lines.append("func end")
+        a = ThreeAddressInstruction(funcDeclarationEndInstruction=FuncDeclarationEndInstruction())
+        self.lines.append(a)
         self.exitScope()
     
     # Enter a parse tree produced by DecafParser#parameter.
@@ -153,12 +368,14 @@ class IntermediateCode(DecafListener):
             expressionOm_code = self.get_expressionOom_code(ctx.expressionOom())
 
             if len(expressionOm_code) == 0:
-                lines.append('\treturn')
+                a = ThreeAddressInstruction(funcReturnInstruction=FuncReturnInstruction())
+                lines.append(a)
             else:
                 lines = lines + expressionOm_code
                 last_expressionOm_temp = self.get_last_temp()
                 self.release_temps()
-                lines.append('\treturn %s' % (last_expressionOm_temp))
+                a = ThreeAddressInstruction(funcReturnInstruction=FuncReturnInstruction(variable=last_expressionOm_temp))
+                lines.append(a)
         
         return lines
     
@@ -467,7 +684,7 @@ class IntermediateCode(DecafListener):
 
             item = utils.getVarItemInScopes(self.varSymbolTable, id, self.getScopes())
 
-            id = "[%d]" % (item.base)
+            id = "estatica[%d]" % (item.base)
 
 
             last_temp_expression = ''
@@ -617,92 +834,56 @@ class IntermediateCode(DecafListener):
             self.lines.append(line)
     
     def assignation(self, result: str, arg1: str, arg2: str, op: str, gotoLabel: str = ''):
-        line = "%s = %s %s %s" % (result, arg1, op, arg2)
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = AssignationInstruction(result, arg1, op, arg2, gotoLabel)
+        line = ThreeAddressInstruction(assignationInstruction=a)
         return line
     
     def unary_assignation(self, result: str, arg1: str, op: str, gotoLabel: str = ''):
-        line = "%s = %s %s" % (result, op, arg1)
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = UnaryAssignationInstruction(result, arg1, op, gotoLabel)
+        line = ThreeAddressInstruction(unaryAssignationInstruction=a)
         return line
     
     def copy_assignation(self, result: str, arg1: str, gotoLabel: str = ''):
-        line = "%s = %s" % (result, arg1)
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = CopyAssignationInstruction(result, arg1, gotoLabel)
+        line = ThreeAddressInstruction(copyAssignationInstruction=a)
         return line
     
     def inconditional_jump(self, label: str, gotoLabel: str = ''):
-        line = "goto %s" % (label)
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = InconditionalJumpInstruction(label, gotoLabel)
+        line = ThreeAddressInstruction(inconditionalJumpInstruction=a)
         return line
     
     def conditional_jump(self, label: str, x: str, isIfFalse: bool = False, gotoLabel: str = ''):
-        line = ''
-        if not isIfFalse:
-            line = "if %s goto %s" % (x, label)
-        else:
-            line = "ifFalse %s goto %s" % (x, label)
-        
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = ConditionalJumpInstruction(label, x, isIfFalse, gotoLabel)
+        line = ThreeAddressInstruction(conditionalJumpInstruction=a)
 
         return line
 
     def conditional_jump_relop(self, label: str, x: str, y: str, relop: str, gotoLabel: str = ''):
-        line = "if %s %s %s goto %s" % (x, relop, y, label) 
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = ConditionalRelopJumpInstruction(label, x, y, relop, gotoLabel)
+        line = ThreeAddressInstruction(conditionalRelopJumpInstruction=a)
         return line
 
     def procedure_param(self, param: str, gotoLabel: str = ''):
-        line = "param %s" % (param)
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = ProcedureParamInstrunction(param, gotoLabel)
+        line = ThreeAddressInstruction(paramInstrunction=a)
         return line
 
     def procedure(self, procedure: str, params: list, gotoLabel: str = ''):
-        line = "call %s, %s" % (procedure, str(len(params))) 
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = ProcedureInstruction(procedure, params, gotoLabel)
+        line = ThreeAddressInstruction(procedureInstruction=a)
         return line
 
     def copy_assignation_index(self, result: str, x: str, index: int, isAssignToItem: bool = False, gotoLabel: str = ''):
-        line = ''
-        if isAssignToItem:
-            line = "%s[%s] = %s" % (result, str(index), x)
-        else:
-            line = "%s = %s[%s]" % (result, x, str(index))
-
-        if gotoLabel != '':
-            line = '%s: ' % (gotoLabel) + line
-        else:
-            line = "\t" + line
+        a = CopyAssignationIndexInstruction(result, x, index, isAssignToItem, gotoLabel)
+        line = ThreeAddressInstruction(copyAssignationIndexInstruction=a)
         return line
     
     def add_label(self, label:str):
-        line = "%s:" % (label)
+        a = LabelInstruction(label)
+        line = ThreeAddressInstruction(labelInstruction=a)
         return line
-
+    
     
 
 

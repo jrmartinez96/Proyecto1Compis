@@ -1,115 +1,18 @@
-func begin Minimo
-	t0 = [40]
-	t1 = t0 * 0
-	t2 = [0][t1]
-	[44] = t2
-	t0 = [40]
-	[48] = t0
-L0:
-	t1 = [40]
-	t0 = 10
-	t1 = t1 < t0
-	ifFalse t1 goto L1
-	t0 = [40]
-	t1 = t0 * 0
-	t2 = [0][t1]
-	t0 = [44]
-	t1 = t2 < t0
-	ifFalse t1 goto L2
-	t0 = [40]
-	t1 = t0 * 0
-	t2 = [0][t1]
-	[44] = t2
-	t0 = [40]
-	[48] = t0
-L2:
-	t1 = [40]
+func begin main
 	t0 = 1
+	estatica[0] = t0
+	t1 = 1
+	estatica[4] = t1
+L0:
+	t0 = estatica[0]
+	t1 = 10
+	t0 = t0 <= t1
+	ifFalse t0 goto L1
+	t1 = estatica[0]
+	t0 = estatica[4]
 	t1 = t1 + t0
-	[40] = t1
+	estatica[0] = t1
 	goto L0
 L1:
-	t0 = [48]
-	return t0
-func end
-func begin Ordenar
-	t1 = 0
-	[52] = t1
-L3:
-	t0 = [52]
-	t1 = 10
-	t0 = t0 < t1
-	ifFalse t0 goto L4
-	t1 = [52]
-	param t1
-	call Minimo, 1
-	t0 = result
-	[64] = t0
-	t1 = [64]
-	t0 = t1 * 0
-	t2 = [0][t0]
-	[60] = t2
-	t0 = [52]
-	t1 = t0 * 0
-	t2 = [0][t1]
-	t0 = [64]
-	t1 = t0 * 0
-	[0][t1] = t2
-	t2 = [60]
-	t0 = [52]
-	t1 = t0 * 0
-	[0][t1] = t2
-	t2 = [52]
-	t0 = 1
-	t1 = t2 + t0
-	[52] = t1
-	goto L3
-L4:
-func end
-func begin OutputInt
-func end
-func begin InputInt
-	t0 = 0
-	return t0
-func end
-func begin main
-	t1 = 0
-	[72] = t1
-L5:
-	t0 = [72]
-	t1 = 10
-	t0 = t0 < t1
-	ifFalse t0 goto L6
-	call InputInt, 0
-	t1 = result
-	t0 = [72]
-	t1 = t0 * 0
-	[0][t1] = t1
-	t2 = [72]
-	t0 = 1
-	t1 = t2 + t0
-	[72] = t1
-	goto L5
-L6:
-	call Ordenar, 0
-	t0 = result
-	t2 = 0
-	[72] = t2
-L7:
-	t0 = [72]
-	t1 = 10
-	t0 = t0 < t1
-	ifFalse t0 goto L8
-	t1 = [72]
-	t0 = t1 * 0
-	t2 = [0][t0]
-	param t2
-	call OutputInt, 1
-	t0 = result
-	t1 = [72]
-	t0 = 1
-	t1 = t1 + t0
-	[72] = t1
-	goto L7
-L8:
+	return 
 func end
