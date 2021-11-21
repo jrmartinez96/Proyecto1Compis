@@ -21,6 +21,8 @@ class SourceCode():
         self.registryDescriptor = {}
         self.addressDescriptor = {}
         
+        self.methodsToBlock = {}
+        
         self.sourceCodeLines = []
         
         self.labelNumber = 0
@@ -36,8 +38,9 @@ class SourceCode():
         self.printBasicBlocks()
         
         # Genera el codigo de maquina
-        self.generateCode()
-        self.printSourceCode() 
+        # self.generateCode()
+        self.generateCodeFromBasicBlock(self.basicBlocks[0])
+        self.printSourceCode()
         
     # Agrega las variables en el desriptor de direcciones
     def setUpDescriptors(self):
@@ -77,6 +80,9 @@ class SourceCode():
                     basicBlock = BasicBlock('block%s' % (len(self.basicBlocks)))
                     basicBlock.intermediateCode = lines.copy()
                     self.basicBlocks.append(basicBlock)
+                    
+                    methodBlocName = 'block%s' % (len(self.basicBlocks))
+                    self.methodsToBlock[threeAddressInstruction.funcDeclarationBeginInstruction.name] = methodBlocName
                     
                     lines = [threeAddressInstruction]
                     
@@ -207,7 +213,7 @@ class SourceCode():
                     if v.find('estatica') != -1:
                         v = '[%s]' % self.getAddressFromEstatica(v)
                     
-                    line = 'STR %s, %s' % (v, r)
+                    line = 'STR\t%s, %s' % (v, r)
                     self.sourceCodeLines.append(line)
                     
                 break
@@ -228,7 +234,11 @@ class SourceCode():
 
     def generateCodeFromBasicBlock(self, basicBlock: BasicBlock):
         varNames = self.addressDescriptor.keys()
-        self.sourceCodeLines.append('%s:' % basicBlock.name)
+        if basicBlock.name == self.mainBlock:
+            self.sourceCodeLines.append('_main:')
+            self.sourceCodeLines.append('%s:' % basicBlock.name)
+        else:
+            self.sourceCodeLines.append('%s:' % basicBlock.name)
         
         for threeAddressLine in basicBlock.intermediateCode:
             if threeAddressLine.copyAssignationInstruction != None:
@@ -276,7 +286,7 @@ class SourceCode():
                     self.addLoadInstruction(firstOperandRegister, firstOperand)
                     self.addLoadInstruction(secondOperandRegister, secondOperand)
                     
-                    line = '%s %s, %s, %s' % (operation, resultRegister, firstOperandRegister, secondOperandRegister)
+                    line = '%s\t%s, %s, %s' % (operation, resultRegister, firstOperandRegister, secondOperandRegister)
                     self.sourceCodeLines.append(line)
                     
                     self.addStoreInstruction(result, resultRegister)
@@ -307,14 +317,14 @@ class SourceCode():
                     label1 = self.getNewLabel()
                     label2 = self.getNewLabel()
                     
-                    line = 'CMP %s, %s' % (firstOperandRegister, secondOperandRegister)
+                    line = 'CMP\t%s, %s' % (firstOperandRegister, secondOperandRegister)
                     self.sourceCodeLines.append(line)
-                    line = 'B.%s %s' % (compareFlag, label1)
+                    line = 'B.%s\t%s' % (compareFlag, label1)
                     self.sourceCodeLines.append(line)
                     
                     resultRegister = self.getReg(result)
                     self.addMoveInstruction(resultRegister, '#0')
-                    line = 'B %s' % label2
+                    line = 'B\t%s' % label2
                     self.sourceCodeLines.append(line)
                     
                     self.addLabelInstruction(label1)
@@ -353,38 +363,48 @@ class SourceCode():
                 else:  
                     self.addMoveInstruction(compareRegister, '#1')
                     
-                line = 'CMP %s, %s' % (compareRegister, conditionRegister)
+                line = 'CMP\t%s, %s' % (compareRegister, conditionRegister)
                 self.sourceCodeLines.append(line)
-                line = 'B.EQ %s' % (conditionalJumpInstruction.label)
+                line = 'B.EQ\t%s' % (conditionalJumpInstruction.label)
                 self.sourceCodeLines.append(line)
 
             elif threeAddressLine.inconditionalJumpInstruction != None:
-                line = 'B %s' % threeAddressLine.inconditionalJumpInstruction.label
+                line = 'B\t%s' % threeAddressLine.inconditionalJumpInstruction.label
                 self.sourceCodeLines.append(line)
+            
+            elif threeAddressLine.funcDeclarationBeginInstruction != None:
+                pass
+            
+            elif threeAddressLine.funcDeclarationEndInstruction != None:
+                line = 'RET'
+                self.sourceCodeLines.append(line)
+                
+            elif threeAddressLine.procedureInstruction != None:
+                procedureInstruction = threeAddressLine.procedureInstruction
+                blockFuncName = self.methodsToBlock[procedureInstruction.procedure]
+                line = 'BL %s' % blockFuncName
+                self.sourceCodeLines.append(line)
+            
                 
     def addStoreInstruction(self, varName: str, register: str):
         var = varName
         if varName.find('estatica') != -1:
-            line = 'MOV %s, #%s' % (self.registerForAddress, self.getAddressFromEstatica(varName))
-            self.sourceCodeLines.append(line)
-            var = '[%s]' % self.registerForAddress
+            var = '[sp, #%s]' % self.getAddressFromEstatica(varName)
             # Cambiar el descriptor de direcciones
             self.addressDescriptor[varName]['var'] = varName
         else:
             tempAddress = '#%s' % self.tempsAddresses[var]
-            line = 'MOV %s, %s' % (self.registerForAddress, tempAddress)
-            self.sourceCodeLines.append(line)
-            var = '[%s]' % self.registerForAddress
+            var = '[sp, %s]' % tempAddress
             
         # Asegura que el descriptor de registros tenga el valor de la variable
         self.registryDescriptor[register] = [varName]
 
-        line = 'STR %s, %s' % (register, var)
+        line = 'STR\t%s, %s' % (register, var)
             
         self.sourceCodeLines.append(line)
     
     def addMoveInstruction(self, r1, r2):
-        line = 'MOV %s, %s' %(r1, r2)
+        line = 'MOV\t%s, %s' %(r1, r2)
         self.sourceCodeLines.append(line)
         
         if r1 != 'X0' and r1 != 'X1':
@@ -399,15 +419,11 @@ class SourceCode():
         # Ejecuta la funcion de LD para la variable y el registro
         v = varName
         if v.find('estatica') != -1:
-            line = 'MOV %s, #%s' % (self.registerForAddress, self.getAddressFromEstatica(v))
-            self.sourceCodeLines.append(line)
-            v = '[%s]' % self.registerForAddress
+            v = '[sp, #%s]' % self.getAddressFromEstatica(v)
         else:
             tempAddress = '#%s' % self.tempsAddresses[v]
-            line = 'MOV %s, %s' % (self.registerForAddress, tempAddress)
-            self.sourceCodeLines.append(line)
-            v = '[%s]' % self.registerForAddress
-        line = 'LDR %s, %s' % (register, v)
+            v = '[sp, %s]' % tempAddress
+        line = 'LDR\t%s, %s' % (register, v)
         self.sourceCodeLines.append(line)
         
         if register != 'X0' and register != 'X1':
@@ -428,13 +444,17 @@ class SourceCode():
     # Print generated code
     def printSourceCode(self):
         with open('Decaf/test_files/result/source.s', "w") as output_file:
-            output_file.write('.global _main \n\n_main:\n\n')
+            output_file.write('.global _main \n\n')
             for line in self.sourceCodeLines:
                 text = ''
-                if len(line) < 4 or (line.find('block') != -1 and line.find(':') != -1):
+                if len(line) < 4 or (line.find('block') != -1 and line.find(':') != -1) or (line.find('main') != -1):
                     print(line)
                     text = '%s\n' % line
                 else:
                     print('\t%s' % line)
                     text = '\t%s\n' % line
                 output_file.write(text)
+            
+            output_file.write('\tmov\tX0, #0\n')
+            output_file.write('\tmov\tX16, #1\n')
+            output_file.write('\tsvc\t#0x80\n')

@@ -54,9 +54,11 @@ class ConditionalRelopJumpInstruction():
         self.goToLabel = goToLabel
 
 class ProcedureParamInstrunction():
-    def __init__(self, param: str = '', goToLabel: str = ''):
+    def __init__(self, param: str = '', base: int = 0, goToLabel: str = ''):
         self.param = param
         self.goToLabel = goToLabel
+        self.base = base
+        
 
 class ProcedureInstruction():
     def __init__(self, procedure: str, params: list, goToLabel: str = ''):
@@ -637,10 +639,12 @@ class IntermediateCode(DecafListener):
                 last_temp_expression = self.get_last_temp()
                 self.release_temps()
 
+                vss_temp = self.new_temp()
                 var_singular_size = '%d' % (struct_item.size)
+                lines.append(self.copy_assignation(vss_temp, var_singular_size))
                 
                 index_temp = self.new_temp()
-                lines.append(self.assignation(index_temp, last_temp_expression, var_singular_size, '*'))
+                lines.append(self.assignation(index_temp, last_temp_expression, vss_temp, '*'))
 
                 array_offset_temp = self.new_temp()
                 lines.append(self.assignation(array_offset_temp, temp, index_temp, '+'))
@@ -661,10 +665,12 @@ class IntermediateCode(DecafListener):
                 last_temp_expression = self.get_last_temp()
                 self.release_temps()
 
+                vss_temp = self.new_temp()
                 var_singular_size = '%d' % (struct_item.size)
+                lines.append(self.copy_assignation(vss_temp, var_singular_size))
                 
                 index_temp = self.new_temp()
-                lines.append(self.assignation(index_temp, last_temp_expression, var_singular_size, '*'))
+                lines.append(self.assignation(index_temp, last_temp_expression, vss_temp, '*'))
 
                 array_offset_temp = self.new_temp()
                 lines.append(self.assignation(array_offset_temp, temp, index_temp, '+'))
@@ -705,9 +711,11 @@ class IntermediateCode(DecafListener):
             
             if last_temp_location != '' or last_temp_expression != '':
                 if last_temp_expression != '' and last_temp_location != '':
+                    vss_temp = self.new_temp()
                     var_singular_size = utils.getSingularVarSize(self.varSymbolTable, self.structSymbolTable, id, self.getScopes())
+                    lines.append(self.copy_assignation(vss_temp, var_singular_size))
                     index_temp = self.new_temp()
-                    lines.append(self.assignation(index_temp, last_temp_expression, var_singular_size, '*'))
+                    lines.append(self.assignation(index_temp, last_temp_expression, vss_temp, '*'))
 
                     expression_location_temp = self.new_temp()
                     lines.append(self.assignation(expression_location_temp, index_temp, last_temp_location, '+'))
@@ -718,9 +726,11 @@ class IntermediateCode(DecafListener):
                         temp = self.new_temp()
                         lines.append(self.copy_assignation_index(temp, id, expression_location_temp))
                 elif last_temp_expression != '':
+                    vss_temp = self.new_temp()
                     var_singular_size = utils.getSingularVarSize(self.varSymbolTable, self.structSymbolTable, id, self.getScopes())
+                    lines.append(self.copy_assignation(vss_temp, var_singular_size))
                     index_temp = self.new_temp()
-                    lines.append(self.assignation(index_temp, last_temp_expression, var_singular_size, '*'))
+                    lines.append(self.assignation(index_temp, last_temp_expression, vss_temp, '*'))
                     
                     if isLeftSide:
                         self.last_location_variable = "%s[%s]" % (id, index_temp)
@@ -762,8 +772,13 @@ class IntermediateCode(DecafListener):
                         lines = lines + child_lines
                         params.append(last_temp)
         
-        for param in params:
-            lines.append(self.procedure_param(param))
+        methodParams = utils.getMethodParams(self.varSymbolTable, id)
+        
+        for i in range(len(params)):
+            param = params[i]
+            varSymbolItem = methodParams[i]
+            base = varSymbolItem.base
+            lines.append(self.procedure_param(param, base))
 
         lines.append(self.procedure(id, params))
         result_temp = self.new_temp()
@@ -864,8 +879,8 @@ class IntermediateCode(DecafListener):
         line = ThreeAddressInstruction(conditionalRelopJumpInstruction=a)
         return line
 
-    def procedure_param(self, param: str, gotoLabel: str = ''):
-        a = ProcedureParamInstrunction(param, gotoLabel)
+    def procedure_param(self, param: str, base: int, gotoLabel: str = ''):
+        a = ProcedureParamInstrunction(param, base, gotoLabel)
         line = ThreeAddressInstruction(paramInstrunction=a)
         return line
 
