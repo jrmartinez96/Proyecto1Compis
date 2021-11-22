@@ -30,9 +30,11 @@ class Program
 		while(i<=2)
 		{
 			int Index;
+			int num;
 			Index = Minimo(i);
 			temp = A[Index];
-			A[Index] = A[i];
+			num = A[i];
+			A[Index] = num;
 			A[i]=temp;
 			i = i+1;
 		}
