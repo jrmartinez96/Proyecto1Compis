@@ -19,7 +19,7 @@ class CopyAssignationInstruction():
         self.goToLabel = goToLabel
 
 class CopyAssignationIndexInstruction():
-    def __init__(self, assignTo: str, operand1: str, index: int, isAssignToItem: bool = False, goToLabel: str = ''):
+    def __init__(self, assignTo: str, operand1: str, index: str, isAssignToItem: bool = False, goToLabel: str = ''):
         self.assignTo = assignTo
         self.operand1 = operand1
         self.index = index
@@ -235,6 +235,7 @@ class IntermediateCode(DecafListener):
         self.last_temp = -1
         self.label_number = 0
         self.last_location_variable = ''
+        self.las_location_variable_index = -1
 
         # Symbol table related
         self.varSymbolTable = varSymbolTable
@@ -348,7 +349,11 @@ class IntermediateCode(DecafListener):
             location_code = self.get_location_code(ctx.location(), isLeftSide=True)
             lines = lines + location_code
 
-            lines.append(self.copy_assignation(self.last_location_variable, last_expression_temp))
+            if self.las_location_variable_index != -1:
+                lines.append(self.copy_assignation_index(self.last_location_variable, last_expression_temp, self.las_location_variable_index, isAssignToItem=True))
+                self.las_location_variable_index = -1
+            else: 
+                lines.append(self.copy_assignation(self.last_location_variable, last_expression_temp))
         elif ctx.expression() != None:
             expression_code = self.get_expression_code(ctx.expression())
             lines = lines + expression_code
@@ -575,7 +580,7 @@ class IntermediateCode(DecafListener):
             if ctx.children[1].getText() == '*':
                 expression1 = ctx.children[0]
                 expression2 = ctx.children[2]
-
+                
                 expression1_code = self.get_expression_code(expression1)
                 last_temp1 = self.get_last_temp()
                 self.release_temps()
@@ -721,7 +726,9 @@ class IntermediateCode(DecafListener):
                     lines.append(self.assignation(expression_location_temp, index_temp, last_temp_location, '+'))
 
                     if isLeftSide:
-                        self.last_location_variable = "%s[%s]" % (id, expression_location_temp)
+                        self.last_location_variable = "%s" % (id)
+                        if id.find('estatica[') != -1:
+                            self.las_location_variable_index = expression_location_temp
                     else:
                         temp = self.new_temp()
                         lines.append(self.copy_assignation_index(temp, id, expression_location_temp))
@@ -733,13 +740,17 @@ class IntermediateCode(DecafListener):
                     lines.append(self.assignation(index_temp, last_temp_expression, vss_temp, '*'))
                     
                     if isLeftSide:
-                        self.last_location_variable = "%s[%s]" % (id, index_temp)
+                        self.last_location_variable = "%s" % (id)
+                        if id.find('estatica[') != -1:
+                            self.las_location_variable_index = index_temp
                     else:
                         temp = self.new_temp()
                         lines.append(self.copy_assignation_index(temp, id, index_temp))
                 elif last_temp_location != '':
                     if isLeftSide:
-                        self.last_location_variable = "%s[%s]" % (id, last_temp_location)
+                        self.last_location_variable = "%s" % (id)
+                        if id.find('estatica[') != -1:
+                            self.las_location_variable_index = last_temp_location
                     else:
                         temp = self.new_temp()
                         lines.append(self.copy_assignation_index(temp, id, last_temp_location))
@@ -889,7 +900,7 @@ class IntermediateCode(DecafListener):
         line = ThreeAddressInstruction(procedureInstruction=a)
         return line
 
-    def copy_assignation_index(self, result: str, x: str, index: int, isAssignToItem: bool = False, gotoLabel: str = ''):
+    def copy_assignation_index(self, result: str, x: str, index: str, isAssignToItem: bool = False, gotoLabel: str = ''):
         a = CopyAssignationIndexInstruction(result, x, index, isAssignToItem, gotoLabel)
         line = ThreeAddressInstruction(copyAssignationIndexInstruction=a)
         return line

@@ -1,0 +1,5 @@
+lldb source
+breakpoint set --name main
+run
+register read
+n

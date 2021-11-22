@@ -88,11 +88,11 @@ class Semantic(DecafListener):
             varId = ctx.ID().getText()
 
             if varType == 'int':
-                size = 4
+                size = 8
             elif varType == 'char':
-                size = 1
+                size = 8
             elif varType == 'boolean':
-                size = 1
+                size = 8
             elif varType.find('struct') != -1:
                 structVarType = varType.replace('struct', '', 1)
                 items = utils.getStructItemsFromStructId(self.structSymbolTable, structVarType)
@@ -190,11 +190,11 @@ class Semantic(DecafListener):
         if parameterType != 'void':
             varId = ctx.getChild(1).getText()
             if parameterType == 'int':
-                size = 4
+                size = 8
             elif parameterType == 'char':
-                size = 1
+                size = 8
             elif parameterType == 'bool':
-                size = 1
+                size = 8
             varSymbolTableItem = VarSymbolTableItem(varId=varId, varType=parameterType, isParam=True, scope=methodId, size=size)
             self.addVarToSymbolTable(varSymbolTableItem)
         

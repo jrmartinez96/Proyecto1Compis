@@ -36,7 +36,7 @@ def main(argv):
                     text = text + line.toString() + '\n'
                 output_file.write(text)
             
-            sourceCode = SourceCode(intermediate_printer.lines, varSymbolTable)
+            sourceCode = SourceCode(intermediate_printer.lines, varSymbolTable, structSymbolTable)
             sourceCode.generate()
 
         for error in myErrorListener.getErrorsList():
