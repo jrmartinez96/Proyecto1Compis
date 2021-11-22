@@ -21,7 +21,7 @@ class SourceCode():
         # Registrode retorno de funciones: X15
         # Registro 
         self.registersToUse = ["X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10",]
-        self.tempsToUse = ['t0', 't1', 't2', 't3', 't4', 't5']
+        self.tempsToUse = ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9']
         self.registryDescriptor = {}
         self.addressDescriptor = {}
         
@@ -36,6 +36,7 @@ class SourceCode():
         self.activationRegistrySize = 0
         self.paramsInNextFunction = []
         self.globalVariables = []
+        self.generateInMain = False
     
     def generate(self):
         # Agrega las variables en el desriptor de direcciones
@@ -249,9 +250,16 @@ class SourceCode():
                 
                 for v in self.registryDescriptor[r]:
                     if v.find('estatica') != -1:
-                        v = '[%s]' % self.getAddressFromEstatica(v)
+                        address = int(self.getAddressFromEstatica(v).replace('#', '', 1))
+                        varContext = 'sp'
+                        if address in self.globalVariables:
+                            varContext = 'X13'
+                        v = '[%s, #%d]' % (varContext, address)
+                    else:
+                        tempAddress = '#%s' % self.tempsAddresses[v]
+                        v = '[sp, %s]' % tempAddress
                     
-                    line = 'STR\t%s, %s' % (v, r)
+                    line = 'STR\t%s, %s' % (r, v)
                     self.sourceCodeLines.append(line)
                     
                 break
@@ -276,7 +284,7 @@ class SourceCode():
     def generateCodeFromBasicBlock(self, basicBlock: BasicBlock):
         varNames = self.addressDescriptor.keys()
         if basicBlock.name == self.mainBlock:
-            self.sourceCodeLines.append('_main:')
+            self.sourceCodeLines.append('_start:')
             self.sourceCodeLines.append('%s:' % basicBlock.name)
         else:
             self.sourceCodeLines.append('%s:' % basicBlock.name)
@@ -417,64 +425,52 @@ class SourceCode():
                 self.sourceCodeLines.append(line)
             
             elif threeAddressLine.funcDeclarationBeginInstruction != None:
-                self.sourceCodeLines.append('STR\t X30, [sp, %d]' % (self.activationRegistrySize - 16))
-                self.sourceCodeLines.append('ADD\t sp, sp, %d' % self.activationRegistrySize)
+                funcDeclarationBeginInstruction = threeAddressLine.funcDeclarationBeginInstruction
+                if funcDeclarationBeginInstruction.name == 'main':
+                    self.sourceCodeLines.append('MOV\tX13, sp')
+                    self.generateInMain = True
+                else:
+                    self.sourceCodeLines.append('SUB\t sp, sp, %d' % self.activationRegistrySize)
+                    self.sourceCodeLines.append('STR\t X30, [sp, %d]' % (self.activationRegistrySize - 16))
+                    
+                    paramsInMethod = utils.getMethodParams(self.varSymbolTable, funcDeclarationBeginInstruction.name)
+                    
+                    for paramSymbolItem in paramsInMethod:
+                        self.sourceCodeLines.append('LDR\t X14, [sp, #%d]' % (self.activationRegistrySize + paramSymbolItem.base))
+                        self.sourceCodeLines.append('STR\t X14, [sp, #%d]' % (paramSymbolItem.base))
+                        
+                    # self.paramsInNextFunction = []
             
             elif threeAddressLine.funcDeclarationEndInstruction != None:
-                # Regresar variables globales
-                for globalBase in self.globalVariables:
-                    self.sourceCodeLines.append('LDR\t X14, [sp, #%d]' % globalBase)
-                    self.sourceCodeLines.append('SUB\t sp, sp, #%d' % self.activationRegistrySize)
-                    self.sourceCodeLines.append('STR\t X14, [sp, #%d]' % globalBase)
+                if not self.generateInMain:
+                    # Desplaza el Stack Pointer y carga en X30 la direccion de retorno de la funcion
+                    self.sourceCodeLines.append('LDR\t X30, [sp, #%d]' % (self.activationRegistrySize - 16))
                     self.sourceCodeLines.append('ADD\t sp, sp, #%d' % self.activationRegistrySize)
-                
-                # Desplaza el Stack Pointer y carga en X30 la direccion de retorno de la funcion
-                self.sourceCodeLines.append('SUB\t sp, sp, #%d' % self.activationRegistrySize)
-                self.sourceCodeLines.append('LDR\t X30, [sp, #%d]' % (self.activationRegistrySize - 16))
-                line = 'RET'
-                self.sourceCodeLines.append(line)
+                    line = 'RET'
+                    self.sourceCodeLines.append(line)
             
             elif threeAddressLine.funcReturnInstruction != None:
                 funcReturnInstruction = threeAddressLine.funcReturnInstruction
                 
-                # Regresar variables globales
-                for globalBase in self.globalVariables:
-                    self.sourceCodeLines.append('LDR\t X14, [sp, #%d]' % globalBase)
-                    self.sourceCodeLines.append('SUB\t sp, sp, #%d' % self.activationRegistrySize)
-                    self.sourceCodeLines.append('STR\t X14, [sp, #%d]' % globalBase)
+                if not self.generateInMain:
+                    # Le asigna el valor de retorno a X15
+                    resultVarName = funcReturnInstruction.variable
+                    if (resultVarName != ''):
+                        resultRegister = self.getReg(resultVarName)
+                        
+                        self.addLoadInstruction(resultRegister, resultVarName)
+                        
+                        self.sourceCodeLines.append('MOV\t %s, %s' % (self.registerForReturn, resultRegister))
+                    
+                    # # Desplaza el Stack Pointer y carga en X30 la direccion de retorno de la funcion
+                    self.sourceCodeLines.append('LDR\t X30, [sp, #%d]' % (self.activationRegistrySize - 16))
                     self.sourceCodeLines.append('ADD\t sp, sp, #%d' % self.activationRegistrySize)
-                
-                # Le asigna el valor de retorno a X15
-                resultVarName = funcReturnInstruction.variable
-                if (resultVarName != ''):
-                    resultRegister = self.getReg(resultVarName)
-                    
-                    self.addLoadInstruction(resultRegister, resultVarName)
-                    
-                    self.sourceCodeLines.append('MOV\t %s, %s' % (self.registerForReturn, resultRegister))
-                
-                # Desplaza el Stack Pointer y carga en X30 la direccion de retorno de la funcion
-                self.sourceCodeLines.append('SUB\t sp, sp, #%d' % self.activationRegistrySize)
-                self.sourceCodeLines.append('LDR\t X30, [sp, #%d]' % (self.activationRegistrySize - 16))
                 line = 'RET'
                 self.sourceCodeLines.append(line)
             
             elif threeAddressLine.procedureInstruction != None:
                 procedureInstruction = threeAddressLine.procedureInstruction
                 
-                for globalBase in self.globalVariables:
-                    self.sourceCodeLines.append('LDR\t X14, [sp, #%d]' % globalBase)
-                    self.sourceCodeLines.append('ADD\t sp, sp, #%d' % self.activationRegistrySize)
-                    self.sourceCodeLines.append('STR\t X14, [sp, #%d]' % globalBase)
-                    self.sourceCodeLines.append('SUB\t sp, sp, #%d' % self.activationRegistrySize)
-                
-                for paramBase in self.paramsInNextFunction:
-                    self.sourceCodeLines.append('LDR\t X14, [sp, #%d]' % paramBase)
-                    self.sourceCodeLines.append('ADD\t sp, sp, #%d' % self.activationRegistrySize)
-                    self.sourceCodeLines.append('STR\t X14, [sp, #%d]' % paramBase)
-                    self.sourceCodeLines.append('SUB\t sp, sp, #%d' % self.activationRegistrySize)
-                
-                self.paramsInNextFunction = []
                 blockFuncName = self.methodsToBlock[procedureInstruction.procedure]
                 line = 'BL %s' % blockFuncName
                 self.sourceCodeLines.append(line)
@@ -488,6 +484,7 @@ class SourceCode():
                 indexRegister = self.getReg(index)
                 self.addLoadInstruction(indexRegister, index)
                 
+                varContext = 'sp'
                 
                 if copyAssignationIndexInstruction.isAssignToItem:
                     last = assignTo.find(']')
@@ -499,7 +496,11 @@ class SourceCode():
                     assignToRegister = indexRegister
                     operandRegister = self.getReg(operand1)
                     
-                    line = 'STR\t%s, [sp, %s]' % (operandRegister, assignToRegister)
+                    
+                    if int(estAddress.replace('#', '', 1)) in self.globalVariables:
+                        varContext = 'X13'
+                    
+                    line = 'STR\t%s, [%s, %s]' % (operandRegister, varContext, assignToRegister)
                     self.sourceCodeLines.append(line)
                 else:
                     last = operand1.find(']')
@@ -511,7 +512,10 @@ class SourceCode():
                     assignToRegister = self.getReg(assignTo)
                     operandRegister = 'X14'
                     
-                    line = 'LDR\t%s, [sp, %s]' % (operandRegister, indexRegister)
+                    if int(estAddress.replace('#', '', 1)) in self.globalVariables:
+                        varContext = 'X13'
+                    
+                    line = 'LDR\t%s, [%s, %s]' % (operandRegister, varContext, indexRegister)
                     self.sourceCodeLines.append(line)
                     
                     # Guardar valor en memoria
@@ -527,14 +531,20 @@ class SourceCode():
                 self.addLoadInstruction(paramRegister, param)
                 varName = 'estatica[%d]' % base
                 self.addStoreInstruction(varName, paramRegister)
-                self.paramsInNextFunction.append(base)
+                # self.paramsInNextFunction.append(base)
                 
             
 
     def addStoreInstruction(self, varName: str, register: str):
         var = varName
         if varName.find('estatica') != -1:
-            var = '[sp, %s]' % self.getAddressFromEstatica(varName)
+            address = int(self.getAddressFromEstatica(varName).replace('#', '', 1))
+            varContext = 'sp'
+            if address in self.globalVariables:
+                varContext = 'X13'
+            
+            var = '[%s, #%d]' % (varContext, address)
+            
             # Cambiar el descriptor de direcciones
             self.addressDescriptor[varName]['var'] = varName
         else:
@@ -542,7 +552,8 @@ class SourceCode():
             var = '[sp, %s]' % tempAddress
             
         # Asegura que el descriptor de registros tenga el valor de la variable
-        self.registryDescriptor[register] = [varName]
+        if register != 'X14':
+            self.registryDescriptor[register] = [varName]
 
         line = 'STR\t%s, %s' % (register, var)
             
@@ -564,7 +575,13 @@ class SourceCode():
         # Ejecuta la funcion de LD para la variable y el registro
         v = varName
         if v.find('estatica') != -1:
-            v = '[sp, %s]' % self.getAddressFromEstatica(v)
+            address = int(self.getAddressFromEstatica(v).replace('#', '', 1))
+            varContext = 'sp'
+            if address in self.globalVariables:
+                varContext = 'X13'
+                
+            v = '[%s, #%d]' % (varContext, address)
+            
         else:
             tempAddress = '#%s' % self.tempsAddresses[v]
             v = '[sp, %s]' % tempAddress
@@ -589,10 +606,10 @@ class SourceCode():
     # Print generated code
     def printSourceCode(self):
         with open('Decaf/test_files/result/source.s', "w") as output_file:
-            output_file.write('.global _main \n\n')
+            output_file.write('.global _start \n\n')
             for line in self.sourceCodeLines:
                 text = ''
-                if len(line) < 4 or (line.find('block') != -1 and line.find(':') != -1) or (line.find('main') != -1):
+                if len(line) < 4 or (line.find('block') != -1 and line.find(':') != -1) or (line.find('start') != -1):
                     print('%s\n' % line)
                     text = '%s\n' % line
                     if line.find('RET') != -1:

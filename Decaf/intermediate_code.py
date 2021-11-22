@@ -703,7 +703,7 @@ class IntermediateCode(DecafListener):
                 expression_code = self.get_expression_code(ctx.expression())
                 lines = lines + expression_code
                 last_temp_expression = self.get_last_temp()
-                self.release_temps()
+                # self.release_temps()
             
             last_temp_location = ''
             if ctx.location() != None:
@@ -718,7 +718,8 @@ class IntermediateCode(DecafListener):
                 if last_temp_expression != '' and last_temp_location != '':
                     vss_temp = self.new_temp()
                     var_singular_size = utils.getSingularVarSize(self.varSymbolTable, self.structSymbolTable, id, self.getScopes())
-                    lines.append(self.copy_assignation(vss_temp, var_singular_size))
+                    
+                    lines.append(self.copy_assignation(vss_temp, '8'))
                     index_temp = self.new_temp()
                     lines.append(self.assignation(index_temp, last_temp_expression, vss_temp, '*'))
 
@@ -735,7 +736,8 @@ class IntermediateCode(DecafListener):
                 elif last_temp_expression != '':
                     vss_temp = self.new_temp()
                     var_singular_size = utils.getSingularVarSize(self.varSymbolTable, self.structSymbolTable, id, self.getScopes())
-                    lines.append(self.copy_assignation(vss_temp, var_singular_size))
+                    lines.append(self.copy_assignation(vss_temp, '8'))
+                    
                     index_temp = self.new_temp()
                     lines.append(self.assignation(index_temp, last_temp_expression, vss_temp, '*'))
                     

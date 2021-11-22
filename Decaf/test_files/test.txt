@@ -1,18 +1,19 @@
 class Program
 {
+	
+	int a;
 
 	int OutputInt(int i)
 	{
 		if (i < 2) {
-			OutputInt(i);
+			OutputInt(i + a);
 		}
 		return 0;
 	}
 
 	void main(void)
-	{	
-		int a;
-		a = 0;
-		OutputInt(a);
+	{
+		a = 1;
+		OutputInt(0);
 	}
 }
