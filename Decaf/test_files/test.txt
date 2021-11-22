@@ -1,15 +1,18 @@
 class Program
 {
-	int A[3];
 
 	int OutputInt(int i)
-	{return i;}
+	{
+		if (i < 2) {
+			OutputInt(i);
+		}
+		return 0;
+	}
 
 	void main(void)
 	{	
-		A[0] = 5;
-		A[1] = 6;
-		A[3] = 7;
-		OutputInt(A[3]);
+		int a;
+		a = 0;
+		OutputInt(a);
 	}
 }

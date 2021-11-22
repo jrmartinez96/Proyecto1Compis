@@ -13,7 +13,8 @@
 
 _start: mov X0, #1     // 1 = StdOut
         adr X1, helloworld // string to print
-        mov X2, #13     // length of our string
+        mov X3, #2
+        mov X2, X3     // length of our string
         mov X16, #4     // MacOS write system call
         svc 0     // Call linux to output the string
 

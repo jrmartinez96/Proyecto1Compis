@@ -89,7 +89,7 @@ class SourceCode():
             self.tempsAddresses[tempToUse] = '%d' % tempsAddressBase
             tempsAddressBase = tempsAddressBase + 8
         
-        self.activationRegistrySize = 512
+        self.activationRegistrySize = 256
         
         for registerToUse in self.registersToUse:
             self.registryDescriptor[registerToUse] = []
@@ -474,7 +474,7 @@ class SourceCode():
                     self.sourceCodeLines.append('STR\t X14, [sp, #%d]' % paramBase)
                     self.sourceCodeLines.append('SUB\t sp, sp, #%d' % self.activationRegistrySize)
                 
-                
+                self.paramsInNextFunction = []
                 blockFuncName = self.methodsToBlock[procedureInstruction.procedure]
                 line = 'BL %s' % blockFuncName
                 self.sourceCodeLines.append(line)
