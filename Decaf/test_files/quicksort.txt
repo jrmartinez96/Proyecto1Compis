@@ -1,7 +1,7 @@
 class Program
 {
 
-	int A[3];
+	int A[10];
 
 	int Minimo(int i)
 	{
@@ -9,7 +9,7 @@ class Program
 		int index;
 		Min = A[i];
 		index = i;
-		while(i<=2)
+		while(i<10)
 		{
 			if (A[i]<Min)
 			{
@@ -27,7 +27,7 @@ class Program
 		int j;
 		int temp;
 		i = 0;
-		while(i<=2)
+		while(i<10)
 		{
 			int Index;
 			int num;
@@ -51,13 +51,20 @@ class Program
 	void main(void)
 	{
 		int i;
-		i = 0;
 		A[0] = 3;
-		A[1] = 2;
-		A[2] = 1;
+		A[1] = 1;
+		A[2] = 2;
+		A[3] = 6;
+		A[4] = 7;
+		A[5] = 5;
+		A[6] = 10;
+		A[7] = 9;
+		A[8] = 4;
+		A[9] = 8;
+
 		Ordenar();
 		i = 0;
-		while(i<=2)
+		while(i<10)
 		{
 			OutputInt(A[i]);
 			i = i+1;

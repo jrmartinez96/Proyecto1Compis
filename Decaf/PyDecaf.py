@@ -74,8 +74,11 @@ def compile_file(filePath):
             with open('Decaf/test_files/intermediate.txt', "w") as output_file:
                 text = ''
                 for line in intermediate_printer.lines:
-                    text = text + line + '\n'
+                    text = text + line.toString() + '\n'
                 output_file.write(text)
+            
+            sourceCode = SourceCode(intermediate_printer.lines, varSymbolTable, structSymbolTable)
+            sourceCode.generate()
         
         return semantic_errors
     except AttributeError as e:

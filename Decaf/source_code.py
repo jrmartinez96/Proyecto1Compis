@@ -90,7 +90,7 @@ class SourceCode():
             self.tempsAddresses[tempToUse] = '%d' % tempsAddressBase
             tempsAddressBase = tempsAddressBase + 8
         
-        self.activationRegistrySize = 256
+        self.activationRegistrySize = 512
         
         for registerToUse in self.registersToUse:
             self.registryDescriptor[registerToUse] = []
@@ -430,16 +430,15 @@ class SourceCode():
                     self.sourceCodeLines.append('MOV\tX13, sp')
                     self.generateInMain = True
                 else:
-                    self.sourceCodeLines.append('SUB\t sp, sp, %d' % self.activationRegistrySize)
-                    self.sourceCodeLines.append('STR\t X30, [sp, %d]' % (self.activationRegistrySize - 16))
+                    self.sourceCodeLines.append('SUB\t sp, sp, #%d' % self.activationRegistrySize)
+                    self.sourceCodeLines.append('STR\t X30, [sp, #%d]' % (self.activationRegistrySize - 16))
                     
                     paramsInMethod = utils.getMethodParams(self.varSymbolTable, funcDeclarationBeginInstruction.name)
                     
-                    for paramSymbolItem in paramsInMethod:
-                        self.sourceCodeLines.append('LDR\t X14, [sp, #%d]' % (self.activationRegistrySize + paramSymbolItem.base))
-                        self.sourceCodeLines.append('STR\t X14, [sp, #%d]' % (paramSymbolItem.base))
-                        
-                    # self.paramsInNextFunction = []
+                    for i in range(len(paramsInMethod)):
+                        paramSymbolItem = paramsInMethod[i]
+                        # self.sourceCodeLines.append('LDR\t X14, [sp, #%d]' % (self.activationRegistrySize + paramSymbolItem.base))
+                        self.sourceCodeLines.append('STR\t X%d, [sp, #%d]' % (i, paramSymbolItem.base))
             
             elif threeAddressLine.funcDeclarationEndInstruction != None:
                 if not self.generateInMain:
@@ -470,10 +469,12 @@ class SourceCode():
             
             elif threeAddressLine.procedureInstruction != None:
                 procedureInstruction = threeAddressLine.procedureInstruction
-                
                 blockFuncName = self.methodsToBlock[procedureInstruction.procedure]
+                
                 line = 'BL %s' % blockFuncName
                 self.sourceCodeLines.append(line)
+                
+                self.paramsInNextFunction = []
             
             elif threeAddressLine.copyAssignationIndexInstruction != None:
                 copyAssignationIndexInstruction = threeAddressLine.copyAssignationIndexInstruction
@@ -526,12 +527,13 @@ class SourceCode():
                 param = procedureParamInstrunction.param
                 base = procedureParamInstrunction.base
                 
-                paramRegister = self.getReg(param)
+                # paramRegister = self.getReg(param)
+                paramRegister = 'X%d' % (len(self.paramsInNextFunction))
                 
                 self.addLoadInstruction(paramRegister, param)
-                varName = 'estatica[%d]' % base
-                self.addStoreInstruction(varName, paramRegister)
-                # self.paramsInNextFunction.append(base)
+                # varName = 'estatica[%d]' % base
+                # self.addStoreInstruction(varName, paramRegister)
+                self.paramsInNextFunction.append(paramRegister)
                 
             
 

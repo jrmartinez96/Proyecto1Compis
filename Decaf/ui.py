@@ -30,6 +30,32 @@ def intermediate_code_code():
         txt_edit.insert(tk.END, text)
     txt_edit.config(state=tk.DISABLED) # se desactiva la edicion
 
+def source_code_window():
+    # Toplevel object which will
+    # be treated as a new window
+    newWindow = tk.Toplevel(master)
+ 
+    # sets the title of the
+    # Toplevel widget
+    newWindow.title("ARMV8 code")
+ 
+    # sets the geometry of toplevel
+    newWindow.geometry("500x600")
+ 
+    
+    newWindow.rowconfigure(0)
+    newWindow.columnconfigure(0)
+
+    txt_edit = tk.Text(newWindow)
+    txt_edit.config(height=45)
+    txt_edit.grid(row=0, column=0, sticky="nsew")
+
+    txt_edit.delete(1.0, tk.END)
+    with open('Decaf/test_files/result/source.s', "r") as input_file:
+        text = input_file.read()
+        txt_edit.insert(tk.END, text)
+    txt_edit.config(state=tk.DISABLED) # se desactiva la edicion
+
 def main_window():
     def open_file():
         """Open a file for editing."""
@@ -72,6 +98,7 @@ def main_window():
         if len(errorsList) == 0:
             console.insert(tk.END, 'Semantic analysis successful.')
             intermediate_code_code()
+            source_code_window()
         
         console.config(state=tk.DISABLED) # se desactiva la edicion
     window = master

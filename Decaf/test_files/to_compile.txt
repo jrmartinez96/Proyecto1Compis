@@ -30,9 +30,11 @@ class Program
 		while(i<10)
 		{
 			int Index;
+			int num;
 			Index = Minimo(i);
 			temp = A[Index];
-			A[Index] = A[i];
+			num = A[i];
+			A[Index] = num;
 			A[i]=temp;
 			i = i+1;
 		}
@@ -49,12 +51,17 @@ class Program
 	void main(void)
 	{
 		int i;
-		i = 0;
-		while(i<10)
-		{
-			A[i]=InputInt();
-			i = i+1;		
-		}
+		A[0] = 3;
+		A[1] = 1;
+		A[2] = 2;
+		A[3] = 6;
+		A[4] = 7;
+		A[5] = 5;
+		A[6] = 10;
+		A[7] = 9;
+		A[8] = 4;
+		A[9] = 8;
+
 		Ordenar();
 		i = 0;
 		while(i<10)

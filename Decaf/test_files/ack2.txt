@@ -41,19 +41,25 @@ class Program
     void main(void)
     {
         int i;
-        int j;
         i = 0;
-        j=0;
-        while(i<10)
-        {
-            A[i]=InputInt();
-            i = i+1;
-        }
+        
+        A[0] = 1;
+        A[1] = 2;
+        A[2] = 3;
+        A[3] = 4;
+        A[4] = 3;
+        A[5] = 2;
+        A[6] = 1;
+        A[7] = 2;
+        A[8] = 3;
+        A[9] = 4;
 
         i=0;
         while (i<10)
         {
-            OutputInt(Ackerman(A[i],j));
+            int ack;
+            ack = Ackerman(A[i],0);
+            OutputInt(ack);
             i = i+1;
         }
     }
