@@ -589,23 +589,24 @@ class IntermediateCode(DecafListener):
                 self.release_temps()
                 lines = lines + expression1_code + expression2_code
 
-                temp_count = self.new_temp()
-                temp_addition = self.new_temp()
-                temp_temp_count = self.new_temp()
-                temp_temp_addition = self.new_temp()
-
-                label = self.new_label()
-                
-                lines.append(self.copy_assignation(temp_count, '0'))
-                lines.append(self.copy_assignation(temp_addition, '0'))
-                lines.append(self.add_label(label))
-                lines.append(self.assignation(temp_temp_addition, temp_addition, last_temp1, '+'))
-                lines.append(self.copy_assignation(temp_addition, temp_temp_addition))
-                lines.append(self.assignation(temp_temp_count, temp_count, '1', '+'))
-                lines.append(self.copy_assignation(temp_count, temp_temp_count))
-                lines.append(self.conditional_jump_relop(label, temp_count, last_temp2, '<'))
                 temp_result = self.new_temp()
-                lines.append(self.copy_assignation(temp_result, temp_addition))
+                lines.append(self.assignation(temp_result, last_temp1, last_temp2, '*'))
+                # temp_addition = self.new_temp()
+                # temp_temp_count = self.new_temp()
+                # temp_temp_addition = self.new_temp()
+
+                # label = self.new_label()
+                
+                # lines.append(self.copy_assignation(temp_count, '0'))
+                # lines.append(self.copy_assignation(temp_addition, '0'))
+                # lines.append(self.add_label(label))
+                # lines.append(self.assignation(temp_temp_addition, temp_addition, last_temp1, '+'))
+                # lines.append(self.copy_assignation(temp_addition, temp_temp_addition))
+                # lines.append(self.assignation(temp_temp_count, temp_count, '1', '+'))
+                # lines.append(self.copy_assignation(temp_count, temp_temp_count))
+                # lines.append(self.conditional_jump_relop(label, temp_count, last_temp2, '<'))
+                # temp_result = self.new_temp()
+                # lines.append(self.copy_assignation(temp_result, temp_addition))
             # TODO: Division y Modulo
 
         else:

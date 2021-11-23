@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "Decaf/ui.py",
             "console": "internalConsole",
-            "args": ["Decaf/test_files/ack2.txt"]
+            "args": ["Decaf/test_files/fibo.txt"]
         }
     ]
 }

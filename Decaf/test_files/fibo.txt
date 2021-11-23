@@ -1,0 +1,44 @@
+class Program
+{ 
+    void OutputInt(int p)
+    {
+    }
+
+	int fib(int n)
+    {
+        if (n <= 1)
+        {
+            return n;
+        }
+        else
+        {
+            int i;
+            int j;
+            int funo;
+            int fdos;
+            int ff;
+
+            i = n-1;
+            j = n-2;
+            funo = fib(i);
+            fdos = fib(j);
+
+            ff = funo + fdos;
+
+            return ff;
+        }
+        
+    }
+
+    void main(void)
+	{
+		int n;
+        int f;
+        n = 9;
+        
+        f = fib(n);
+
+        OutputInt(f); 
+	}
+
+}

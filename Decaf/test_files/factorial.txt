@@ -1,0 +1,40 @@
+class Program
+{ 
+    void OutputInt(int n)
+    {
+    }
+
+	int factorial(int n)
+	{
+		if (n==0)
+		{
+            int j;
+            j = 1;
+			return j;
+		}
+		else
+		{
+            int r;
+            int f;
+            int a;
+            r = n - 1;
+            f = factorial(r);
+            
+            a = f * n;
+
+			return a;
+		}
+
+	}
+
+	void main(void)
+	{
+		int i;
+        int j;
+        i = 7;
+
+        j = factorial(i);
+        OutputInt(j);
+	}
+
+}

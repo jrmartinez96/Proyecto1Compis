@@ -1,157 +1,50 @@
-func begin Minimo
-	t0 = estatica[80]
-	t1 = 8
-	t2 = t0 * t1
-	t3 = estatica[0][t2]
-	estatica[88] = t3
-	t0 = estatica[80]
-	estatica[96] = t0
-L0:
-	t1 = estatica[80]
-	t0 = 10
-	t1 = t1 < t0
-	ifFalse t1 goto L1
-	t0 = estatica[80]
-	t2 = 8
-	t3 = t0 * t2
-	t4 = estatica[0][t3]
-	t0 = estatica[88]
-	t1 = t4 < t0
-	ifFalse t1 goto L2
-	t0 = estatica[80]
-	t2 = 8
-	t3 = t0 * t2
-	t4 = estatica[0][t3]
-	estatica[88] = t4
-	t0 = estatica[80]
-	estatica[96] = t0
-L2:
-	t1 = estatica[80]
-	t0 = 1
-	t1 = t1 + t0
-	estatica[80] = t1
-	goto L0
-L1:
-	t0 = estatica[96]
-	return t0
-func end
-func begin Ordenar
-	t1 = 0
-	estatica[104] = t1
-L3:
-	t0 = estatica[104]
-	t1 = 10
-	t0 = t0 < t1
-	ifFalse t0 goto L4
-	t1 = estatica[104]
-	param t1
-	call Minimo, 1
-	t0 = result
-	estatica[128] = t0
-	t1 = estatica[128]
-	t2 = 8
-	t3 = t1 * t2
-	t4 = estatica[0][t3]
-	estatica[120] = t4
-	t0 = estatica[104]
-	t1 = 8
-	t2 = t0 * t1
-	t3 = estatica[0][t2]
-	estatica[136] = t3
-	t0 = estatica[136]
-	t1 = estatica[128]
-	t2 = 8
-	t3 = t1 * t2
-	estatica[0][t3] = t0
-	t4 = estatica[120]
-	t0 = estatica[104]
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t4
-	t3 = estatica[104]
-	t0 = 1
-	t1 = t3 + t0
-	estatica[104] = t1
-	goto L3
-L4:
-func end
 func begin OutputInt
 func end
-func begin InputInt
-	t0 = 0
-	return t0
+func begin fib
+	t0 = estatica[8]
+	t1 = 1
+	t0 = t0 <= t1
+	ifFalse t0 goto L0
+	t1 = estatica[8]
+	return t1
+	goto L1
+L0:
+	t0 = estatica[8]
+	t1 = 1
+	t0 = t0 - t1
+	estatica[16] = t0
+	t1 = estatica[8]
+	t0 = 2
+	t1 = t1 - t0
+	estatica[24] = t1
+	t0 = estatica[16]
+	param t0
+	call fib, 1
+	t1 = result
+	estatica[32] = t1
+	t0 = estatica[24]
+	param t0
+	call fib, 1
+	t1 = result
+	estatica[40] = t1
+	t0 = estatica[32]
+	t1 = estatica[40]
+	t0 = t0 + t1
+	estatica[48] = t0
+	t1 = estatica[48]
+	return t1
+L1:
 func end
 func begin main
-	t1 = 3
-	t0 = 0
-	t2 = 8
-	t3 = t0 * t2
-	estatica[0][t3] = t1
-	t4 = 1
-	t0 = 1
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t4
-	t3 = 2
-	t0 = 2
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t3
-	t4 = 6
-	t0 = 3
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t4
-	t3 = 7
-	t0 = 4
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t3
-	t4 = 5
-	t0 = 5
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t4
-	t3 = 10
-	t0 = 6
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t3
-	t4 = 9
-	t0 = 7
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t4
-	t3 = 4
-	t0 = 8
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t3
-	t4 = 8
 	t0 = 9
-	t1 = 8
-	t2 = t0 * t1
-	estatica[0][t2] = t4
-	call Ordenar, 0
-	t3 = result
-	t5 = 0
-	estatica[152] = t5
-L5:
-	t0 = estatica[152]
-	t1 = 10
-	t0 = t0 < t1
-	ifFalse t0 goto L6
-	t1 = estatica[152]
-	t2 = 8
-	t3 = t1 * t2
-	t4 = estatica[0][t3]
-	param t4
+	estatica[56] = t0
+	t1 = estatica[56]
+	param t1
+	call fib, 1
+	t0 = result
+	estatica[64] = t0
+	t1 = estatica[64]
+	param t1
 	call OutputInt, 1
 	t0 = result
-	t1 = estatica[152]
-	t0 = 1
-	t1 = t1 + t0
-	estatica[152] = t1
-	goto L5
-L6:
 func end
